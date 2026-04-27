@@ -3,11 +3,11 @@ from __future__ import annotations
 import os
 import socket
 
-from .launcher import normalize_app_mode
+from .launcher import resolve_app_mode
 
 
 def main() -> int:
-    mode = normalize_app_mode(os.environ.get("APP_MODE", "web"))
+    mode = resolve_app_mode(os.environ.get("APP_MODE"))
     if mode != "web":
         return 0
 

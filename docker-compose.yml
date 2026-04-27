@@ -11,7 +11,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       CONFIG_PATH: /data/config.json
-      APP_MODE: ${APP_MODE:-web}
+      APP_MODE: ${APP_MODE:-auto}
       WEB_HOST: 0.0.0.0
       WEB_PORT: 19892
       CONSOLE_USERNAME: ${CONSOLE_USERNAME:-admin}

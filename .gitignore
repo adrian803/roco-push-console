@@ -3,7 +3,6 @@ __pycache__/
 .venv/
 .env
 .pytest_cache/
-tests/
 *.egg-info/
 data/
 merchant_render.jpg

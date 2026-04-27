@@ -1,0 +1,77 @@
+name: Scheduled Push
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Beijing/Hong Kong 08:05, 12:05, 16:05, 20:05.
+    - cron: "5 0,4,8,12 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-push
+  cancel-in-progress: false
+
+jobs:
+  run-once:
+    name: Run merchant check once
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TZ: Asia/Shanghai
+      CONFIG_PATH: ${{ runner.temp }}/roco-config.json
+      ROCOM_API_KEY: ${{ secrets.ROCOM_API_KEY }}
+      ROCOM_API_URL: ${{ vars.ROCOM_API_URL }}
+      SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+      PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+      PUSHPLUS_TOPIC: ${{ vars.PUSHPLUS_TOPIC }}
+      PUSHPLUS_CHANNEL: ${{ vars.PUSHPLUS_CHANNEL }}
+      WECOM_CORPID: ${{ secrets.WECOM_CORPID }}
+      WECOM_SECRET: ${{ secrets.WECOM_SECRET }}
+      WECOM_AGENTID: ${{ secrets.WECOM_AGENTID }}
+      WECOM_TOUSER: ${{ vars.WECOM_TOUSER }}
+      WECOM_BOT_WEBHOOK: ${{ secrets.WECOM_BOT_WEBHOOK }}
+      WECOM_BOT_KEY: ${{ secrets.WECOM_BOT_KEY }}
+      WXPUSHER_APP_TOKEN: ${{ secrets.WXPUSHER_APP_TOKEN }}
+      WXPUSHER_UIDS: ${{ vars.WXPUSHER_UIDS }}
+      WXPUSHER_TOPIC_IDS: ${{ vars.WXPUSHER_TOPIC_IDS }}
+      BARK_SERVER_URL: ${{ vars.BARK_SERVER_URL }}
+      BARK_DEVICE_KEY: ${{ secrets.BARK_DEVICE_KEY }}
+      BARK_GROUP: ${{ vars.BARK_GROUP }}
+      DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
+      DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+      FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+      FEISHU_SECRET: ${{ secrets.FEISHU_SECRET }}
+      NTFY_BASE_URL: ${{ vars.NTFY_BASE_URL }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+      NTFY_PRIORITY: ${{ vars.NTFY_PRIORITY }}
+      NTFY_TAGS: ${{ vars.NTFY_TAGS }}
+      GOTIFY_BASE_URL: ${{ vars.GOTIFY_BASE_URL }}
+      GOTIFY_APP_TOKEN: ${{ secrets.GOTIFY_APP_TOKEN }}
+      GOTIFY_PRIORITY: ${{ vars.GOTIFY_PRIORITY }}
+      NOTIFY_EMPTY: ${{ vars.NOTIFY_EMPTY || 'false' }}
+      DELIVERY_MODE: ${{ vars.DELIVERY_MODE || 'all' }}
+      HTTP_TIMEOUT: ${{ vars.HTTP_TIMEOUT || '30' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Run push once
+        run: uv run python main.py

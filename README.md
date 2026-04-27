@@ -4,7 +4,7 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-一个用于监控《洛克王国世界》远行商人刷新状态的 Docker 常驻服务。项目提供 Web 控制台，可以配置 WeGame 数据接口 Key、北京时间定时任务、多个推送通道和发送策略，并把刷新结果推送到微信、企业微信、飞书、钉钉、Bark、ntfy、Gotify 等服务。
+一个用于监控《洛克王国世界》远行商人刷新状态的 Docker 常驻服务。项目提供 Web 控制台，也支持只配置必要 Key 后自动进入无控制台托管模式，并把刷新结果推送到微信、企业微信、飞书、钉钉、Bark、ntfy、Gotify 等服务。
 
 目前推送内容以文字和 Markdown 为主，方便在不同推送平台之间保持一致；项目不内置图片渲染和图片推送逻辑。
 
@@ -24,9 +24,10 @@ Server 酱推送效果：
 
 ## 功能
 
-- Docker 常驻运行，默认端口 `19892`
+- Docker 常驻运行，控制台默认端口 `19892`
 - Web 控制台管理配置，无需反复改环境变量
-- 支持无控制台托管模式，只读环境变量 / 配置文件定时推送
+- 支持自动托管模式，配置齐 `ROCOM_API_KEY` 和任一推送通道 Key 后不启动 Web UI
+- 默认定时在远行商人刷新后 5 分钟推送，减少数据源同步延迟带来的空推送
 - 配置持久化到 `./data/config.json`
 - 支持多通道同时发送、单通道发送、主备失败切换
 - 支持单通道测试和按当前策略测试
@@ -49,7 +50,9 @@ Server 酱推送效果：
 
 ## 安全提醒
 
-默认 `docker-compose.yml` 会让容器内控制台监听 `0.0.0.0`，并发布到宿主机 `19892` 端口；同时 `CONSOLE_PASSWORD` 为空时会关闭 Web 控制台认证。这对本地首次部署比较方便，但如果机器能被局域网或公网访问，就等同于把管理端暴露出去。
+默认 `APP_MODE=auto`：当 `ROCOM_API_KEY` 和任一推送通道 Key 已配置时，容器只启动调度器，不启动 Web 控制台；缺少必要配置时才会启动 Web 控制台方便首次配置。
+
+如果显式使用 `APP_MODE=web`，或因为缺少 Key 进入控制台模式，`docker-compose.yml` 会让容器内控制台监听 `0.0.0.0`，并发布到宿主机 `19892` 端口；同时 `CONSOLE_PASSWORD` 为空时会关闭 Web 控制台认证。这对本地首次部署比较方便，但如果机器能被局域网或公网访问，就等同于把管理端暴露出去。
 
 公开部署或共享服务器上至少要做这几件事：
 
@@ -60,7 +63,37 @@ Server 酱推送效果：
 
 ## 快速开始
 
-### 方式一：Docker Hub 镜像
+### 方式一：只配置 Key 自动托管
+
+适合不想使用 Web UI、只想运行起来后长期托管的场景。只填数据源 Key 和一种推送通道 Key 即可，默认会在 `08:05,12:05,16:05,20:05` 推送，也就是远行商人刷新后 5 分钟。
+
+Server 酱最小示例：
+
+```bash
+docker run -d \
+  --name roco-push-console \
+  --restart unless-stopped \
+  -e ROCOM_API_KEY=换成你的接口Key \
+  -e SERVERCHAN_SENDKEY=换成你的Server酱SendKey \
+  linxi5013/roco-push-console:latest
+```
+
+也可以换成其他推送通道，只填对应通道需要的环境变量。例如 PushPlus：
+
+```bash
+docker run -d \
+  --name roco-push-console \
+  --restart unless-stopped \
+  -e ROCOM_API_KEY=换成你的接口Key \
+  -e PUSHPLUS_TOKEN=换成你的PushPlusToken \
+  linxi5013/roco-push-console:latest
+```
+
+这种模式不会监听 `19892`，也不需要配置 `CONSOLE_USERNAME`、`CONSOLE_PASSWORD`、`WEB_PORT`。
+
+### 方式二：Docker Hub 镜像 + Web 控制台
+
+如果想通过页面配置和测试通道，显式设置 `APP_MODE=web`：
 
 ```bash
 docker run -d \
@@ -68,6 +101,7 @@ docker run -d \
   --restart unless-stopped \
   -p 19892:19892 \
   -v ./data:/data \
+  -e APP_MODE=web \
   -e CONSOLE_USERNAME=admin \
   -e CONSOLE_PASSWORD=换成你的控制台密码 \
   linxi5013/roco-push-console:latest
@@ -79,13 +113,7 @@ docker run -d \
 http://服务器IP:19892
 ```
 
-可用镜像标签：
-
-```bash
-docker pull linxi5013/roco-push-console:latest
-```
-
-### 方式二：docker compose
+### 方式三：docker compose
 
 ```bash
 git clone https://github.com/adrian803/roco-push-console.git
@@ -93,12 +121,11 @@ cd roco-push-console
 cp .env.example .env
 ```
 
-修改 `.env`，至少设置控制台密码：
+如果想自动托管，只在 `.env` 里设置必需 Key：
 
 ```env
-CONSOLE_USERNAME=admin
-CONSOLE_PASSWORD=换成你的控制台密码
-WEB_PORT=19892
+ROCOM_API_KEY=换成你的接口Key
+SERVERCHAN_SENDKEY=换成你的Server酱SendKey
 ```
 
 启动：
@@ -113,42 +140,24 @@ docker compose up -d
 docker compose up -d --build
 ```
 
-### 方式三：无控制台托管运行
-
-如果只想把服务跑起来后交给它自己定时推送，可以使用 `APP_MODE=scheduler`。这种模式只启动调度器，不启动 Web 控制台，也不会监听 `19892`，适合不想维护页面、只想配置 Key 后长期托管的场景。
-
-最小配置示例，使用 Server 酱：
-
-```bash
-docker run -d \
-  --name roco-push-console \
-  --restart unless-stopped \
-  -e APP_MODE=scheduler \
-  -e ROCOM_API_KEY=换成你的接口Key \
-  -e SERVERCHAN_SENDKEY=换成你的Server酱SendKey \
-  -e SCHEDULE_TIMES=08:05,12:05,16:05,20:05 \
-  linxi5013/roco-push-console:latest
-```
-
-也可以换成其他推送通道，只填对应通道需要的环境变量。例如 PushPlus：
-
-```bash
-docker run -d \
-  --name roco-push-console \
-  --restart unless-stopped \
-  -e APP_MODE=scheduler \
-  -e ROCOM_API_KEY=换成你的接口Key \
-  -e PUSHPLUS_TOKEN=换成你的PushPlusToken \
-  linxi5013/roco-push-console:latest
-```
-
-使用 `docker compose` 时，在 `.env` 里设置：
+如果想使用 Web 控制台，在 `.env` 里显式设置：
 
 ```env
-APP_MODE=scheduler
-ROCOM_API_KEY=换成你的接口Key
-SERVERCHAN_SENDKEY=换成你的Server酱SendKey
+APP_MODE=web
+CONSOLE_USERNAME=admin
+CONSOLE_PASSWORD=换成你的控制台密码
+WEB_PORT=19892
 ```
+
+可用镜像标签：
+
+```bash
+docker pull linxi5013/roco-push-console:latest
+```
+
+### 无控制台模式说明
+
+`APP_MODE=auto` 会自动判断：配置齐 `ROCOM_API_KEY` 和任一推送通道 Key 时进入无控制台调度；缺配置时进入 Web 控制台。也可以显式设置 `APP_MODE=scheduler` 强制无控制台运行。
 
 如果同时填写多个推送通道变量，程序会把它们都启用。默认发送策略是 `all`，也就是同时发送；需要主备切换时可以设置 `DELIVERY_MODE=failover`。
 
@@ -207,19 +216,19 @@ SERVERCHAN_SENDKEY=换成你的Server酱SendKey
 
 ## 环境变量
 
-`.env` 里的 `ROCOM_API_KEY`、推送通道 Key 和定时时间会作为默认配置读取。使用 Web 控制台保存过配置后，会优先读取 `./data/config.json`；使用无控制台模式时，可以只维护 `.env` 或 `docker run -e` 参数。
+`.env` 里的 `ROCOM_API_KEY`、推送通道 Key 和定时时间会作为默认配置读取。使用 Web 控制台保存过配置后，会优先读取 `./data/config.json`；使用自动托管或无控制台模式时，可以只维护 `.env` 或 `docker run -e` 参数。
 
 | 变量                     | 默认值                               | 说明                                                     |
 | ------------------------ | ------------------------------------ | -------------------------------------------------------- |
 | `DOCKER_IMAGE`           | `linxi5013/roco-push-console:latest` | compose 使用的镜像                                       |
-| `APP_MODE`               | `web`                                | 运行模式：`web` 控制台 / `scheduler` 无控制台定时 / `once` 执行一次 |
+| `APP_MODE`               | `auto`                               | 运行模式：`auto` 自动判断 / `web` 控制台 / `scheduler` 无控制台定时 / `once` 执行一次 |
 | `WEB_PORT`               | `19892`                              | 宿主机访问端口                                           |
 | `CONSOLE_USERNAME`       | `admin`                              | 控制台用户名                                             |
 | `CONSOLE_PASSWORD`       | 空                                   | 控制台密码；为空时不启用认证，部署到可访问网络前必须设置 |
 | `CONSOLE_SESSION_TTL`    | `86400`                              | 控制台登录态有效期，单位秒                               |
 | `CONSOLE_SESSION_SECRET` | 空                                   | Cookie 签名密钥；默认使用控制台密码                      |
 | `ROCOM_API_KEY`          | 空                                   | 首次启动默认 WeGame 接口 Key                             |
-| `ROCOM_API_URL`          | 空                                   | 自定义 WeGame 数据接口，通常保持空使用内置默认值         |
+| `ROCOM_API_URL`          | 空                                   | 自定义 WeGame 数据接口，保持空使用内置默认值             |
 | `SERVERCHAN_SENDKEY`     | 空                                   | 兼容旧配置，首次启动时创建 Server 酱通道                 |
 | `DELIVERY_MODE`          | `all`                                | 首次启动默认发送策略：`all` / `single` / `failover`      |
 | `SCHEDULE_TIMES`         | `08:05,12:05,16:05,20:05`            | 首次启动默认定时，默认在刷新后 5 分钟推送                 |
@@ -291,6 +300,12 @@ uv sync --frozen
 uv run python -m roco_push_console.web
 ```
 
+启动自动模式：
+
+```bash
+uv run python -m roco_push_console.launcher
+```
+
 一次性执行检查：
 
 ```bash
@@ -311,11 +326,77 @@ docker compose config --quiet
 docker build -t roco-push-console:latest .
 ```
 
+## GitHub Actions
+
+### CI 和测试目录
+
+是的，如果希望 GitHub Actions 或 PR 检查运行：
+
+```bash
+uv run python -m unittest discover -s tests
+uv run python -m compileall -q src main.py tests
+docker compose config --quiet
+```
+
+就需要把 `tests/` 一起提交到 GitHub。仓库已提供 `.github/workflows/ci.yml`，会在 PR、`main` / `master` 分支 push、手动触发时运行这些检查。
+
+### 自动构建和发布镜像
+
+`.github/workflows/docker-publish.yml` 会在 `main` / `master` 分支 push、`v*.*.*` 标签、手动触发时构建并发布多架构镜像：
+
+- `linux/amd64`
+- `linux/arm64`
+
+需要在 GitHub 仓库设置里添加 Secrets：
+
+| 名称 | 说明 |
+| ---- | ---- |
+| `DOCKERHUB_USERNAME` | Docker Hub 用户名 |
+| `DOCKERHUB_TOKEN` | Docker Hub Access Token |
+
+可选添加 Repository Variable：
+
+| 名称 | 默认值 | 说明 |
+| ---- | ------ | ---- |
+| `DOCKERHUB_REPOSITORY` | `linxi5013/roco-push-console` | 发布到 Docker Hub 的镜像名 |
+
+如果没有配置 Docker Hub secrets，发布工作流会自动跳过推送，不会误报构建失败。
+
+### GitHub Actions 免费定时推送
+
+`.github/workflows/scheduled-push.yml` 可以不部署服务器，直接用 GitHub Actions 定时运行一次推送检查。默认 cron 对应北京时间 / 香港时间：
+
+| 本地时间 | UTC cron |
+| -------- | -------- |
+| 08:05 | `5 0 * * *` |
+| 12:05 | `5 4 * * *` |
+| 16:05 | `5 8 * * *` |
+| 20:05 | `5 12 * * *` |
+
+最小配置是在 GitHub 仓库 `Settings -> Secrets and variables -> Actions` 里添加：
+
+| 类型 | 名称 | 说明 |
+| ---- | ---- | ---- |
+| Secret | `ROCOM_API_KEY` | 数据源接口 Key |
+| Secret | `SERVERCHAN_SENDKEY` | Server 酱 SendKey，或改用下面任一推送通道 Secret |
+
+也可以使用其他推送通道，对应填写 `PUSHPLUS_TOKEN`、`WECOM_BOT_WEBHOOK`、`DINGTALK_WEBHOOK`、`FEISHU_WEBHOOK`、`BARK_DEVICE_KEY`、`NTFY_TOPIC`、`GOTIFY_APP_TOKEN` 等 Secrets；非敏感可选项如 `PUSHPLUS_TOPIC`、`DELIVERY_MODE`、`NOTIFY_EMPTY`、`HTTP_TIMEOUT` 可以放到 Repository Variables。
+
+注意：GitHub Actions 的定时任务不是严格实时，实际执行可能延迟几分钟；定时任务只会在默认分支生效，仓库长期无活动也可能被 GitHub 暂停。想要最稳定的长期运行，仍建议使用 Docker 常驻托管。
+
+### Cloudflare 等免费定时平台
+
+Cloudflare Workers Cron Triggers 也可以做免费定时任务，但它不能像 GitHub Actions 一样直接执行本仓库的 `uv run python main.py` 或 Dockerfile。要接入 Cloudflare，需要单独写一个 Worker 适配器，或者让 Worker 定时调用一个已经部署好的 HTTP 接口。本仓库当前先提供 GitHub Actions 版定时推送，因为它能复用现有 Python 逻辑和全部推送通道。
+
 ## 常见问题
 
 ### 为什么打开控制台不需要密码？
 
-`CONSOLE_PASSWORD` 为空时会关闭认证。部署到局域网或公网前请设置 `CONSOLE_PASSWORD`。
+`CONSOLE_PASSWORD` 为空时会关闭认证。部署到局域网或公网前请设置 `CONSOLE_PASSWORD`，或使用默认 `APP_MODE=auto` 并填齐 `ROCOM_API_KEY` 和推送通道 Key，让服务直接进入无控制台托管模式。
+
+### 为什么没有启动 Web 控制台？
+
+默认 `APP_MODE=auto` 会在配置齐全时只启动调度器，不监听 `19892`。如果你想强制使用页面配置，设置 `APP_MODE=web` 后重建或重启容器。
 
 ### 为什么提示缺少 `ROCOM_API_KEY`？
 
@@ -353,7 +434,7 @@ docker compose up -d --force-recreate
 ## 路线图
 
 - 支持更多推送平台
-- 增加 GitHub Actions 自动构建和镜像发布
+- 增加 Cloudflare Workers Cron 适配器
 - 增加更完整的端到端测试
 
 ## 贡献

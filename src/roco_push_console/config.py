@@ -127,10 +127,10 @@ class Settings:
         default_provider_id = providers[0].id if providers else ""
         return cls(
             rocom_api_key=os.environ.get("ROCOM_API_KEY", "").strip(),
-            game_api_url=os.environ.get("ROCOM_API_URL", DEFAULT_GAME_API_URL).strip(),
+            game_api_url=_env_text_or_default("ROCOM_API_URL", DEFAULT_GAME_API_URL),
             notify_empty=_env_bool("NOTIFY_EMPTY", False),
             http_timeout=_env_int("HTTP_TIMEOUT", 30),
-            schedule_times=os.environ.get("SCHEDULE_TIMES", DEFAULT_SCHEDULE_TIMES).strip(),
+            schedule_times=_env_text_or_default("SCHEDULE_TIMES", DEFAULT_SCHEDULE_TIMES),
             run_on_start=_env_bool("RUN_ON_START", False),
             delivery_mode=os.environ.get("DELIVERY_MODE", "all").strip() or "all",
             selected_provider=os.environ.get("SELECTED_PROVIDER", "").strip() or default_provider_id,
@@ -285,6 +285,13 @@ def _provider_order(providers: list[ProviderConfig]) -> list[str]:
 
 def _env_text(name: str) -> str:
     return os.environ.get(name, "").strip()
+
+
+def _env_text_or_default(name: str, default: str) -> str:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip() or default
 
 
 def _env_providers() -> list[ProviderConfig]:
