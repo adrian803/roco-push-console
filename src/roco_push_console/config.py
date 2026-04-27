@@ -123,6 +123,10 @@ class Settings:
         delivery_mode = text("delivery_mode", base.delivery_mode)
         if delivery_mode not in {"all", "single", "failover"}:
             delivery_mode = "all"
+        provider_ids = {provider.id for provider in providers if provider.enabled}
+        selected_provider = text("selected_provider", base.selected_provider)
+        if selected_provider not in provider_ids:
+            selected_provider = next(iter(_provider_order(providers)), "")
 
         return cls(
             rocom_api_key=text("rocom_api_key", base.rocom_api_key),
@@ -132,7 +136,7 @@ class Settings:
             schedule_times=text("schedule_times", base.schedule_times) or DEFAULT_SCHEDULE_TIMES,
             run_on_start=_to_bool(data.get("run_on_start"), base.run_on_start),
             delivery_mode=delivery_mode,
-            selected_provider=text("selected_provider", base.selected_provider),
+            selected_provider=selected_provider,
             failover_order=_provider_order(providers),
             providers=providers,
         )

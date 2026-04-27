@@ -188,7 +188,12 @@ async def api_save_config(request: Request) -> JSONResponse:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    for provider in payload.get("providers", []):
+    providers = payload.get("providers", [])
+    if not isinstance(providers, list):
+        raise HTTPException(status_code=400, detail="通道配置格式错误")
+    for provider in providers:
+        if not isinstance(provider, dict):
+            raise HTTPException(status_code=400, detail="通道配置格式错误")
         if provider.get("type") not in PROVIDER_TYPES:
             raise HTTPException(status_code=400, detail=f"未知通道类型: {provider.get('type')}")
 
@@ -1110,6 +1115,7 @@ INDEX_HTML = r"""<!doctype html>
       if (!button) return;
       const index = Number(button.dataset.index);
       if (button.dataset.action === "remove") {
+        providers = collectProviders();
         providers.splice(index, 1);
         renderProviders();
         markConfigDirty();
@@ -1150,6 +1156,7 @@ INDEX_HTML = r"""<!doctype html>
         $("message").textContent = "通道类型还未加载完成，请稍后再试";
         return;
       }
+      providers = collectProviders();
       const config = {};
       (spec.fields || []).forEach(field => {
         if (field.default) config[field.name] = field.default;
