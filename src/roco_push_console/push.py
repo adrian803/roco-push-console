@@ -107,7 +107,10 @@ def _missing_required(provider: ProviderConfig) -> list[str]:
 
 
 _SENSITIVE_QUERY_RE = re.compile(
-    r"(?i)(\b(?:access_token|app_token|corpsecret|key|secret|sendkey|token|webhook)=)([^&\s]+)"
+    r"(?i)(\b(?:access_token|app_token|corpsecret|key|read_key|readkey|secret|sendkey|token|webhook)=)([^&\s]+)"
+)
+_SENSITIVE_FIELD_RE = re.compile(
+    r"(?i)(['\"]?\b(?:access_token|app_token|corpsecret|key|read_key|readkey|secret|sendkey|token|webhook)\b['\"]?\s*[:=]\s*['\"]?)([^'\",\s}&]+)(['\"]?)"
 )
 
 
@@ -119,7 +122,8 @@ def _redact_sensitive_text(provider: ProviderConfig, text: str) -> str:
             redacted = redacted.replace(value, "[已脱敏]")
             redacted = redacted.replace(urllib.parse.quote_plus(value), "[已脱敏]")
             redacted = redacted.replace(urllib.parse.quote(value, safe=""), "[已脱敏]")
-    return _SENSITIVE_QUERY_RE.sub(r"\1[已脱敏]", redacted)
+    redacted = _SENSITIVE_QUERY_RE.sub(r"\1[已脱敏]", redacted)
+    return _SENSITIVE_FIELD_RE.sub(r"\1[已脱敏]\3", redacted)
 
 
 def _result_from_response(

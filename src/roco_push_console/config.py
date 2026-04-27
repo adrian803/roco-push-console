@@ -133,7 +133,7 @@ class Settings:
             run_on_start=_to_bool(data.get("run_on_start"), base.run_on_start),
             delivery_mode=delivery_mode,
             selected_provider=text("selected_provider", base.selected_provider),
-            failover_order=_parse_string_list(data.get("failover_order", base.failover_order)),
+            failover_order=_provider_order(providers),
             providers=providers,
         )
 
@@ -227,10 +227,8 @@ class ConfigStore:
         return str(backup_path), ""
 
 
-def _parse_string_list(value: Any) -> list[str]:
-    if isinstance(value, list):
-        return [str(item).strip() for item in value if str(item).strip()]
-    return [part.strip() for part in str(value or "").split(",") if part.strip()]
+def _provider_order(providers: list[ProviderConfig]) -> list[str]:
+    return [provider.id for provider in providers if provider.enabled]
 
 
 def _legacy_serverchan_provider(sendkey: str) -> ProviderConfig | None:

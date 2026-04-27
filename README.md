@@ -10,7 +10,21 @@
 - 支持多通道同时发送、单通道发送、主备失败切换
 - 支持测试推送，不保存草稿也能测试当前表单内容
 - 敏感字段保存后不回显，页面显示“已配置，留空不改”
-- 推送异常和 HTTP 错误会脱敏，避免 token 出现在控制台状态区和 Docker 日志里
+- 推送异常、HTTP 错误和服务商返回详情会脱敏，避免 token / readkey 出现在控制台状态区和 Docker 日志里
+
+## 界面预览
+
+登录页：
+
+<img src="docs/images/login.png" alt="登录页" width="760">
+
+控制台：
+
+<img src="docs/images/console.png" alt="控制台" width="760">
+
+Server 酱推送效果：
+
+<img src="docs/images/serverchan-push.png" alt="Server 酱推送效果" width="420">
 
 ## 来源与鸣谢
 
@@ -69,6 +83,7 @@ http://服务器IP:19892
 
 ```bash
 docker pull linxi5013/roco-push-console:latest
+docker pull linxi5013/roco-push-console:0.1.2
 docker pull linxi5013/roco-push-console:0.1.1
 docker pull linxi5013/roco-push-console:0.1.0
 ```
@@ -121,13 +136,25 @@ docker compose up -d --build
 ./data/config.json
 ```
 
+### 通道配置说明
+
+每个通道卡片只展示日常会用到的配置：
+
+- `名称`：给自己看的显示名，比如“我的 Server 酱”“备用 PushPlus”。可以按需修改。
+- `启用`：关闭后该通道不会参与发送。
+- 服务商参数：例如 Server 酱的 `SendKey`、PushPlus 的 `Token`、企业微信机器人的 `Webhook`。
+
+程序内部会自动为每个通道生成稳定 ID，用来保存配置、测试单个通道和执行主备切换。这个 ID 对普通使用没有实际操作意义，所以控制台不展示，也不需要手动填写。
+
+如果使用“主备切换，成功即停”，发送顺序就是页面里的通道卡片顺序。可以用通道卡片右上角的“上移”“下移”调整优先级，越靠上越先尝试。
+
 ## 发送策略
 
 | 策略 | 行为 |
 | --- | --- |
 | 所有启用通道同时发送 | 向全部启用通道发送，至少一个成功即认为本轮有送达 |
-| 只发送选中通道 | 只向 `selected_provider` 指定通道发送 |
-| 主备切换，成功即停 | 按 `failover_order` 顺序尝试，第一个成功后停止 |
+| 只发送选中通道 | 只向下拉框选中的通道发送 |
+| 主备切换，成功即停 | 按页面通道列表顺序尝试启用通道，第一个成功后停止 |
 
 ## 环境变量
 

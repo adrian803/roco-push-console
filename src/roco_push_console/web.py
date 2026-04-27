@@ -816,10 +816,6 @@ INDEX_HTML = r"""<!doctype html>
                 <label for="selected_provider">选中通道</label>
                 <select id="selected_provider" name="selected_provider"></select>
               </div>
-              <div class="field">
-                <label for="failover_order">主备顺序</label>
-                <input id="failover_order" name="failover_order" class="mono" placeholder="provider-id-1,provider-id-2">
-              </div>
               <label class="checkline">
                 <input id="notify_empty" name="notify_empty" type="checkbox">
                 无商品时也推送
@@ -872,7 +868,7 @@ INDEX_HTML = r"""<!doctype html>
 
   <script>
     const $ = (id) => document.getElementById(id);
-    const baseFields = ["rocom_api_key", "game_api_url", "schedule_times", "http_timeout", "delivery_mode", "selected_provider", "failover_order"];
+    const baseFields = ["rocom_api_key", "game_api_url", "schedule_times", "http_timeout", "delivery_mode", "selected_provider"];
     let providerTypes = {};
     let providers = [];
     let configDirty = false;
@@ -972,7 +968,7 @@ INDEX_HTML = r"""<!doctype html>
     }
     function refreshProviderSelects(config = {}) {
       const options = ['<option value="">未选择</option>'].concat(providers.map(provider =>
-        `<option value="${escapeHTML(provider.id)}">${escapeHTML(provider.name || providerLabel(provider.type))} (${escapeHTML(provider.id)})</option>`
+        `<option value="${escapeHTML(provider.id)}">${escapeHTML(provider.name || providerLabel(provider.type))}</option>`
       ));
       $("selected_provider").innerHTML = options.join("");
       $("selected_provider").value = config.selected_provider || "";
@@ -1004,6 +1000,8 @@ INDEX_HTML = r"""<!doctype html>
                 <div class="provider-meta">${escapeHTML(spec.label)} · ${escapeHTML(spec.description || "")}</div>
               </div>
               <div class="actions" style="margin-top:0;">
+                <button type="button" class="subtle" data-action="move-up" data-index="${index}" ${index === 0 ? "disabled" : ""}>上移</button>
+                <button type="button" class="subtle" data-action="move-down" data-index="${index}" ${index === providers.length - 1 ? "disabled" : ""}>下移</button>
                 <button type="button" class="subtle" data-action="test" data-index="${index}">测试</button>
                 <button type="button" class="danger" data-action="remove" data-index="${index}">删除</button>
               </div>
@@ -1012,10 +1010,6 @@ INDEX_HTML = r"""<!doctype html>
               <div class="field">
                 <label>名称</label>
                 <input data-provider-index="${index}" data-provider-field="name" value="${escapeHTML(provider.name || "")}">
-              </div>
-              <div class="field">
-                <label>ID</label>
-                <input data-provider-index="${index}" data-provider-field="id" value="${escapeHTML(provider.id)}" class="mono">
               </div>
               <label class="checkline">
                 <input data-provider-index="${index}" data-provider-field="enabled" type="checkbox" ${provider.enabled ? "checked" : ""}>
@@ -1059,7 +1053,7 @@ INDEX_HTML = r"""<!doctype html>
         run_on_start: $("run_on_start").checked,
         delivery_mode: $("delivery_mode").value,
         selected_provider: $("selected_provider").value,
-        failover_order: $("failover_order").value.split(",").map(item => item.trim()).filter(Boolean),
+        failover_order: providers.filter(provider => provider.enabled).map(provider => provider.id),
         providers,
       };
     }
@@ -1069,8 +1063,6 @@ INDEX_HTML = r"""<!doctype html>
         if (name === "rocom_api_key") {
           $(name).value = "";
           $(name).placeholder = config.has_rocom_api_key ? "已配置，留空不改" : "未配置";
-        } else if (name === "failover_order") {
-          $(name).value = (config.failover_order || []).join(",");
         } else if (name !== "selected_provider") {
           $(name).value = config[name] ?? "";
         }
@@ -1119,6 +1111,18 @@ INDEX_HTML = r"""<!doctype html>
       const index = Number(button.dataset.index);
       if (button.dataset.action === "remove") {
         providers.splice(index, 1);
+        renderProviders();
+        markConfigDirty();
+      }
+      if (button.dataset.action === "move-up" && index > 0) {
+        providers = collectProviders();
+        [providers[index - 1], providers[index]] = [providers[index], providers[index - 1]];
+        renderProviders();
+        markConfigDirty();
+      }
+      if (button.dataset.action === "move-down" && index < providers.length - 1) {
+        providers = collectProviders();
+        [providers[index + 1], providers[index]] = [providers[index], providers[index + 1]];
         renderProviders();
         markConfigDirty();
       }
