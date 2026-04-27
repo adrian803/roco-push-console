@@ -38,7 +38,15 @@ Server 酱推送效果：
 
 本项目基于 [ALLCAPS-Droid/roco-merchant-notifier](https://github.com/ALLCAPS-Droid/roco-merchant-notifier) 修改而来，保留远行商人数据解析和定时推送思路，并改造成 Docker 常驻服务、Web 控制台和多推送通道版本。
 
-本项目的数据源由 [Entropy-Increase-Team](https://github.com/Entropy-Increase-Team/) 提供。你需要前往该项目主页或相关社区，获取用于调用 WeGame 接口的 `ROCOM_API_KEY`。
+本项目的数据源由 [Entropy-Increase-Team](https://github.com/Entropy-Increase-Team/) 提供。本仓库当前只调用其数据接口，不内置、不分发、不代理申请 `ROCOM_API_KEY`；使用者需要前往该项目主页或相关社区按其规则申请，后续也可以在其官方前端完成后自行注册获取。
+
+本项目不会绕过数据源服务端限制，接口调用频率以数据源后端实际限制为准。请合理设置定时频率，避免滥用接口。
+
+### 许可边界
+
+本仓库使用 MIT License，适用于本项目自有代码。第三方项目、接口、数据源和推送平台仍遵循各自许可与服务条款。
+
+根据数据源项目负责人的说明：如果本项目仅使用 Entropy-Increase-Team 的接口，只需标注数据来源；如果后续直接使用、复制或改造其项目代码，则需要遵守其 AGPL-3.0 协议要求，保留相应版权和协议标注，并按 AGPL-3.0 公开相关修改源码。
 
 ## 安全提醒
 
@@ -259,7 +267,7 @@ docker build -t roco-push-console:latest .
 
 ### 为什么提示缺少 `ROCOM_API_KEY`？
 
-需要先从 [Entropy-Increase-Team](https://github.com/Entropy-Increase-Team/) 项目主页或相关社区获取用于调用 WeGame 接口的 `ROCOM_API_KEY`，再填入控制台或 `.env`。
+本项目不内置 API Key。需要先从 [Entropy-Increase-Team](https://github.com/Entropy-Increase-Team/) 项目主页或相关社区获取用于调用 WeGame 接口的 `ROCOM_API_KEY`，再填入控制台或 `.env`。等数据源项目官方前端完成后，也可以按其官方流程自行注册获取。
 
 ### 为什么修改 `.env` 后页面没变？
 
@@ -317,7 +325,7 @@ docker compose config --quiet
 
 ## 免责声明
 
-本项目是个人学习和自用工具，和游戏官方、WeGame、各推送平台均无从属关系。请遵守相关服务条款，不要滥用接口或推送能力。
+本项目是个人学习和自用工具，和游戏官方、WeGame、各推送平台均无从属关系。项目只保存使用者自行填写的接口 Key 和推送 token，不提供、不出售、不共享任何第三方 API Key。请遵守相关服务条款，不要滥用接口或推送能力。
 
 ## 许可
 
