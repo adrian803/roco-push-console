@@ -1,0 +1,25 @@
+services:
+  roco-push-console:
+    build: .
+    image: ${DOCKER_IMAGE:-linxi5013/roco-push-console:latest}
+    container_name: roco-push-console
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-19892}:19892"
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Asia/Shanghai
+      CONFIG_PATH: /data/config.json
+      WEB_HOST: 0.0.0.0
+      WEB_PORT: 19892
+      CONSOLE_USERNAME: ${CONSOLE_USERNAME:-admin}
+      CONSOLE_PASSWORD: ${CONSOLE_PASSWORD:-}
+      ROCOM_API_KEY: ${ROCOM_API_KEY:-}
+      ROCOM_API_URL: ${ROCOM_API_URL:-}
+      SERVERCHAN_SENDKEY: ${SERVERCHAN_SENDKEY:-}
+      NOTIFY_EMPTY: ${NOTIFY_EMPTY:-false}
+      DELIVERY_MODE: ${DELIVERY_MODE:-all}
+      HTTP_TIMEOUT: ${HTTP_TIMEOUT:-30}
+      SCHEDULE_TIMES: ${SCHEDULE_TIMES:-08:01,12:01,16:01,20:01}
+      RUN_ON_START: ${RUN_ON_START:-false}

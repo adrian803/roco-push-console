@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.pytest_cache/
+tests/
+*.egg-info/
+data/
+merchant_render.jpg
+.ace-tool/
