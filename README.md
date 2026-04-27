@@ -76,6 +76,7 @@ http://服务器IP:19892
 
 ```bash
 docker pull linxi5013/roco-push-console:latest
+docker pull linxi5013/roco-push-console:0.1.3
 docker pull linxi5013/roco-push-console:0.1.2
 docker pull linxi5013/roco-push-console:0.1.1
 docker pull linxi5013/roco-push-console:0.1.0
