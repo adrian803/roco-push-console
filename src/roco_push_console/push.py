@@ -14,6 +14,8 @@ import requests
 from .provider_specs import PROVIDER_TYPES, provider_required_fields
 from .provider_specs import provider_secret_fields
 
+HttpSession = requests.Session
+
 
 @dataclass(frozen=True)
 class NotificationMessage:
@@ -73,6 +75,26 @@ class ProviderConfig:
         }
 
 
+@dataclass(frozen=True)
+class JsonPostRequest:
+    provider: ProviderConfig
+    session: HttpSession
+    url: str
+    payload: dict[str, Any]
+    timeout: int
+    headers: dict[str, str] | None = None
+    success_codes: set[Any] = field(default_factory=lambda: {0, "0"})
+
+
+@dataclass(frozen=True)
+class DeliveryOptions:
+    mode: str
+    selected_provider: str = ""
+    failover_order: list[str] | None = None
+    session: HttpSession | None = None
+    timeout: int = 10
+
+
 def _to_bool(value: Any, default: bool) -> bool:
     if value is None:
         return default
@@ -106,11 +128,11 @@ def _missing_required(provider: ProviderConfig) -> list[str]:
     ]
 
 
-_SENSITIVE_QUERY_RE = re.compile(
-    r"(?i)(\b(?:access_token|app_token|corpsecret|key|read_key|readkey|secret|sendkey|token|webhook)=)([^&\s]+)"
-)
+_SENSITIVE_NAMES = "access_token|app_token|corpsecret|key|read_key|readkey|secret|sendkey|token|webhook"
+_SENSITIVE_QUERY_RE = re.compile(rf"(?i)(\b(?:{_SENSITIVE_NAMES})=)([^&\s]+)")
 _SENSITIVE_FIELD_RE = re.compile(
-    r"(?i)(['\"]?\b(?:access_token|app_token|corpsecret|key|read_key|readkey|secret|sendkey|token|webhook)\b['\"]?\s*[:=]\s*['\"]?)([^'\",\s}&]+)(['\"]?)"
+    rf"(?i)(['\"]?\b(?:{_SENSITIVE_NAMES})\b['\"]?\s*[:=]\s*['\"]?)"
+    r"([^'\",\s}&]+)(['\"]?)"
 )
 
 
@@ -150,25 +172,25 @@ def _result_from_response(
     )
 
 
-def _post_json(
-    provider: ProviderConfig,
-    session: requests.Session,
-    url: str,
-    payload: dict[str, Any],
-    timeout: int,
-    *,
-    headers: dict[str, str] | None = None,
-    success_codes: set[Any] = {0, "0"},
-) -> PushResult:
-    response = session.post(url, json=payload, headers=headers, timeout=timeout)
-    return _result_from_response(provider, response, success_codes=success_codes)
+def _post_json(request: JsonPostRequest) -> PushResult:
+    response = request.session.post(
+        request.url,
+        json=request.payload,
+        headers=request.headers,
+        timeout=request.timeout,
+    )
+    return _result_from_response(
+        request.provider,
+        response,
+        success_codes=request.success_codes,
+    )
 
 
 def send_provider(
     provider: ProviderConfig,
     message: NotificationMessage,
     *,
-    session: requests.Session | None = None,
+    session: HttpSession | None = None,
     timeout: int = 10,
 ) -> PushResult:
     missing = _missing_required(provider)
@@ -185,7 +207,13 @@ def send_provider(
     try:
         sender = PROVIDER_SENDERS.get(provider.type)
         if sender is None:
-            return PushResult(provider.id, provider.name, provider.type, False, f"未知通道类型: {provider.type}")
+            return PushResult(
+                provider.id,
+                provider.name,
+                provider.type,
+                False,
+                f"未知通道类型: {provider.type}",
+            )
         result = sender(provider, message, client, timeout)
         return PushResult(
             result.provider_id,
@@ -205,13 +233,17 @@ def send_provider(
         )
 
 
-def send_serverchan(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_serverchan(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     url = f"https://sctapi.ftqq.com/{provider.config['sendkey']}.send"
     response = session.post(url, data={"title": message.title, "desp": message.markdown}, timeout=timeout)
     return _result_from_response(provider, response, success_codes={0, "0", None})
 
 
-def send_pushplus(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_pushplus(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     payload = {
         "token": provider.config["token"],
         "title": message.title,
@@ -222,13 +254,22 @@ def send_pushplus(provider: ProviderConfig, message: NotificationMessage, sessio
         value = str(provider.config.get(key, "")).strip()
         if value:
             payload[key] = value
-    return _post_json(provider, session, "https://www.pushplus.plus/send", payload, timeout, success_codes={200, "200", 0, "0"})
+    return _post_json(
+        JsonPostRequest(
+            provider,
+            session,
+            "https://www.pushplus.plus/send",
+            payload,
+            timeout,
+            success_codes={200, "200", 0, "0"},
+        )
+    )
 
 
 _WECOM_TOKEN_CACHE: dict[tuple[str, str], tuple[str, float]] = {}
 
 
-def _get_wecom_token(provider: ProviderConfig, session: requests.Session, timeout: int) -> str:
+def _get_wecom_token(provider: ProviderConfig, session: HttpSession, timeout: int) -> str:
     corpid = provider.config["corpid"]
     secret = provider.config["secret"]
     cache_key = (corpid, secret)
@@ -251,7 +292,9 @@ def _get_wecom_token(provider: ProviderConfig, session: requests.Session, timeou
     return token
 
 
-def send_wecomchan(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_wecomchan(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     token = _get_wecom_token(provider, session, timeout)
     url = f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}"
     payload = {
@@ -261,10 +304,12 @@ def send_wecomchan(provider: ProviderConfig, message: NotificationMessage, sessi
         "text": {"content": f"{message.title}\n\n{message.body}\n\n{message.markdown}"},
         "safe": 0,
     }
-    return _post_json(provider, session, url, payload, timeout, success_codes={0, "0"})
+    return _post_json(JsonPostRequest(provider, session, url, payload, timeout))
 
 
-def send_wecom_bot(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_wecom_bot(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     webhook = str(provider.config.get("webhook") or "").strip()
     if not webhook:
         key = str(provider.config.get("key") or "").strip()
@@ -272,10 +317,12 @@ def send_wecom_bot(provider: ProviderConfig, message: NotificationMessage, sessi
             return PushResult(provider.id, provider.name, provider.type, False, "缺少 webhook 或 key")
         webhook = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}"
     payload = {"msgtype": "markdown", "markdown": {"content": message.markdown}}
-    return _post_json(provider, session, webhook, payload, timeout, success_codes={0, "0"})
+    return _post_json(JsonPostRequest(provider, session, webhook, payload, timeout))
 
 
-def send_wxpusher(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_wxpusher(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     payload: dict[str, Any] = {
         "appToken": provider.config["app_token"],
         "content": message.markdown,
@@ -288,10 +335,21 @@ def send_wxpusher(provider: ProviderConfig, message: NotificationMessage, sessio
         payload["uids"] = uids
     if topic_ids:
         payload["topicIds"] = [int(item) if item.isdigit() else item for item in topic_ids]
-    return _post_json(provider, session, "https://wxpusher.zjiecode.com/api/send/message", payload, timeout, success_codes={1000, "1000", 0, "0"})
+    return _post_json(
+        JsonPostRequest(
+            provider,
+            session,
+            "https://wxpusher.zjiecode.com/api/send/message",
+            payload,
+            timeout,
+            success_codes={1000, "1000", 0, "0"},
+        )
+    )
 
 
-def send_bark(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_bark(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     server_url = str(provider.config.get("server_url") or "https://api.day.app").rstrip("/")
     url = f"{server_url}/{provider.config['device_key']}"
     payload = {
@@ -301,7 +359,16 @@ def send_bark(provider: ProviderConfig, message: NotificationMessage, session: r
     group = str(provider.config.get("group") or "").strip()
     if group:
         payload["group"] = group
-    return _post_json(provider, session, url, payload, timeout, success_codes={200, "200", 0, "0"})
+    return _post_json(
+        JsonPostRequest(
+            provider,
+            session,
+            url,
+            payload,
+            timeout,
+            success_codes={200, "200", 0, "0"},
+        )
+    )
 
 
 def _append_dingtalk_sign(webhook: str, secret: str) -> str:
@@ -309,18 +376,21 @@ def _append_dingtalk_sign(webhook: str, secret: str) -> str:
         return webhook
     timestamp = str(round(time.time() * 1000))
     string_to_sign = f"{timestamp}\n{secret}".encode("utf-8")
-    sign = urllib.parse.quote_plus(base64.b64encode(hmac.new(secret.encode("utf-8"), string_to_sign, hashlib.sha256).digest()))
+    digest = hmac.new(secret.encode("utf-8"), string_to_sign, hashlib.sha256).digest()
+    sign = urllib.parse.quote_plus(base64.b64encode(digest))
     separator = "&" if "?" in webhook else "?"
     return f"{webhook}{separator}timestamp={timestamp}&sign={sign}"
 
 
-def send_dingtalk_bot(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_dingtalk_bot(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     webhook = _append_dingtalk_sign(provider.config["webhook"], str(provider.config.get("secret") or ""))
     payload = {
         "msgtype": "markdown",
         "markdown": {"title": message.title, "text": message.markdown},
     }
-    return _post_json(provider, session, webhook, payload, timeout, success_codes={0, "0"})
+    return _post_json(JsonPostRequest(provider, session, webhook, payload, timeout))
 
 
 def _feishu_sign(secret: str, timestamp: str) -> str:
@@ -329,7 +399,9 @@ def _feishu_sign(secret: str, timestamp: str) -> str:
     return base64.b64encode(digest).decode("utf-8")
 
 
-def send_feishu_bot(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_feishu_bot(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     payload: dict[str, Any] = {
         "msg_type": "post",
         "content": {
@@ -346,10 +418,14 @@ def send_feishu_bot(provider: ProviderConfig, message: NotificationMessage, sess
         timestamp = str(int(time.time()))
         payload["timestamp"] = timestamp
         payload["sign"] = _feishu_sign(secret, timestamp)
-    return _post_json(provider, session, provider.config["webhook"], payload, timeout, success_codes={0, "0"})
+    return _post_json(
+        JsonPostRequest(provider, session, provider.config["webhook"], payload, timeout)
+    )
 
 
-def send_ntfy(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_ntfy(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     base_url = str(provider.config.get("base_url") or "https://ntfy.sh").rstrip("/")
     url = f"{base_url}/{provider.config['topic']}"
     headers = {
@@ -363,14 +439,29 @@ def send_ntfy(provider: ProviderConfig, message: NotificationMessage, session: r
     token = str(provider.config.get("token") or "").strip()
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    response = session.post(url, data=message.markdown.encode("utf-8"), headers=headers, timeout=timeout)
+    response = session.post(
+        url,
+        data=message.markdown.encode("utf-8"),
+        headers=headers,
+        timeout=timeout,
+    )
     success = 200 <= response.status_code < 300
-    return PushResult(provider.id, provider.name, provider.type, success, response.text[:200] or response.reason, response.status_code)
+    return PushResult(
+        provider.id,
+        provider.name,
+        provider.type,
+        success,
+        response.text[:200] or response.reason,
+        response.status_code,
+    )
 
 
-def send_gotify(provider: ProviderConfig, message: NotificationMessage, session: requests.Session, timeout: int) -> PushResult:
+def send_gotify(
+    provider: ProviderConfig, message: NotificationMessage, session: HttpSession, timeout: int
+) -> PushResult:
     base_url = str(provider.config["base_url"]).rstrip("/")
-    url = f"{base_url}/message?token={urllib.parse.quote_plus(str(provider.config['app_token']))}"
+    app_token = urllib.parse.quote_plus(str(provider.config["app_token"]))
+    url = f"{base_url}/message?token={app_token}"
     try:
         priority = int(provider.config.get("priority") or 5)
     except (TypeError, ValueError):
@@ -417,24 +508,48 @@ class DeliveryReport:
         }
 
 
+def _delivery_options(
+    options: DeliveryOptions | None,
+    legacy_options: dict[str, Any],
+) -> DeliveryOptions:
+    if options is not None:
+        if legacy_options:
+            raise TypeError("options cannot be combined with legacy delivery keyword arguments")
+        return options
+
+    mode = str(legacy_options.pop("mode", "all"))
+    selected_provider = str(legacy_options.pop("selected_provider", ""))
+    failover_order = legacy_options.pop("failover_order", None)
+    session = legacy_options.pop("session", None)
+    timeout = int(legacy_options.pop("timeout", 10))
+    if legacy_options:
+        unexpected = ", ".join(sorted(legacy_options))
+        raise TypeError(f"unexpected delivery option(s): {unexpected}")
+    return DeliveryOptions(mode, selected_provider, failover_order, session, timeout)
+
+
 def send_delivery(
     providers: list[ProviderConfig],
     message: NotificationMessage,
     *,
-    mode: str,
-    selected_provider: str = "",
-    failover_order: list[str] | None = None,
-    session: requests.Session | None = None,
-    timeout: int = 10,
+    options: DeliveryOptions | None = None,
+    **legacy_options: Any,
 ) -> DeliveryReport:
-    client = session or requests.Session()
+    delivery_options = _delivery_options(options, legacy_options)
+    client = delivery_options.session or requests.Session()
     enabled = [provider for provider in providers if provider.enabled]
-    mode = mode if mode in {"all", "single", "failover"} else "all"
+    mode = delivery_options.mode
+    if mode not in {"all", "single", "failover"}:
+        mode = "all"
 
     if mode == "single":
-        targets = [provider for provider in enabled if provider.id == selected_provider]
+        targets = [
+            provider
+            for provider in enabled
+            if provider.id == delivery_options.selected_provider
+        ]
     elif mode == "failover":
-        order = failover_order or [provider.id for provider in enabled]
+        order = delivery_options.failover_order or [provider.id for provider in enabled]
         provider_map = {provider.id: provider for provider in enabled}
         targets = [provider_map[item] for item in order if item in provider_map]
     else:
@@ -442,7 +557,12 @@ def send_delivery(
 
     results: list[PushResult] = []
     for provider in targets:
-        result = send_provider(provider, message, session=client, timeout=timeout)
+        result = send_provider(
+            provider,
+            message,
+            session=client,
+            timeout=delivery_options.timeout,
+        )
         results.append(result)
         if mode == "failover" and result.success:
             break

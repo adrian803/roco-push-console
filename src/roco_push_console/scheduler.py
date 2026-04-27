@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
+from contextlib import suppress
 from collections.abc import Awaitable, Callable
 from datetime import datetime, time, timedelta
 
-from .app import get_last_delivery_report, run
+from .app import RunResult, run
 from .config import ConfigStore, DEFAULT_SCHEDULE_TIMES, Settings
 from .time_utils import BEIJING_TZ, beijing_now, ensure_beijing_time
+
+
+NowProvider = Callable[[], datetime]
+SleepFunc = Callable[[float], Awaitable[None]]
 
 
 def parse_schedule_times(value: str | None) -> list[time]:
@@ -70,8 +75,16 @@ class SchedulerState:
 
 
 class SchedulerService:
-    def __init__(self, store: ConfigStore):
+    def __init__(
+        self,
+        store: ConfigStore,
+        *,
+        now_provider: NowProvider = beijing_now,
+        sleep_func: SleepFunc = asyncio.sleep,
+    ):
         self.store = store
+        self._now_provider = now_provider
+        self._sleep = sleep_func
         self.state = SchedulerState()
         self._wake_event = asyncio.Event()
         self._run_lock = asyncio.Lock()
@@ -80,6 +93,15 @@ class SchedulerService:
     def start(self) -> None:
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(self._loop())
+
+    async def stop(self) -> None:
+        task = self._task
+        if task is not None and not task.done():
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+        self._task = None
+        self.state.running = False
 
     def wake(self) -> None:
         self._wake_event.set()
@@ -94,12 +116,17 @@ class SchedulerService:
         async with self._run_lock:
             settings = self.store.load()
             self.state.in_progress = True
-            self.state.last_started_at = beijing_now()
+            self.state.last_started_at = self._now()
             self.state.last_message = f"{reason}中"
             try:
-                exit_code = await run(settings)
+                result = await run(settings)
+                if isinstance(result, RunResult):
+                    exit_code = result.exit_code
+                    report = result.report
+                else:
+                    exit_code = int(result)
+                    report = None
                 self.state.last_exit_code = exit_code
-                report = get_last_delivery_report()
                 if report is not None:
                     self.state.last_push_results = report.to_dict()["results"]
                 else:
@@ -109,8 +136,11 @@ class SchedulerService:
                 self.state.last_exit_code = 1
                 self.state.last_message = f"{reason}异常: {exc}"
             finally:
-                self.state.last_finished_at = beijing_now()
+                self.state.last_finished_at = self._now()
                 self.state.in_progress = False
+
+    async def serve_forever(self) -> None:
+        await self._loop()
 
     async def _loop(self) -> None:
         self.state.running = True
@@ -129,7 +159,7 @@ class SchedulerService:
                     await self._wait_or_wake(60)
                     continue
 
-                now = beijing_now()
+                now = self._now()
                 next_run = next_run_after(now, schedule_times)
                 wait_seconds = max(0.0, (next_run - now).total_seconds())
                 self.state.next_run_at = next_run
@@ -146,58 +176,68 @@ class SchedulerService:
             self.state.running = False
 
     async def _wait_or_wake(self, timeout: float) -> bool:
-        try:
-            await asyncio.wait_for(self._wake_event.wait(), timeout=timeout)
-        except asyncio.TimeoutError:
+        if timeout <= 0:
+            if self._wake_event.is_set():
+                self._wake_event.clear()
+                return True
+            await self._sleep(0)
             return False
-        self._wake_event.clear()
-        return True
+
+        wake_task = asyncio.create_task(self._wake_event.wait())
+        sleep_task = asyncio.create_task(self._sleep(timeout))
+        done, pending = await asyncio.wait(
+            {wake_task, sleep_task},
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        for task in pending:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+        woke = wake_task in done and wake_task.result()
+        if woke:
+            self._wake_event.clear()
+        return woke
+
+    def _now(self) -> datetime:
+        return ensure_beijing_time(self._now_provider())
+
+
+class StaticSettingsStore:
+    def __init__(self, settings: Settings):
+        self._settings = settings
+
+    def load(self) -> Settings:
+        return self._settings
 
 
 async def run_scheduler(
     settings: Settings,
     *,
-    now_provider: Callable[[], datetime] = beijing_now,
-    sleep_func: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    now_provider: NowProvider = beijing_now,
+    sleep_func: SleepFunc = asyncio.sleep,
 ) -> None:
     schedule_times = parse_schedule_times(settings.schedule_times)
-    run_on_start = settings.run_on_start
-
     display_times = ", ".join(item.strftime("%H:%M") for item in schedule_times)
     print(f"容器调度器已启动，北京时间定时: {display_times}", flush=True)
-
-    if run_on_start:
-        print("RUN_ON_START=true，启动后立即执行一次", flush=True)
-        await run(settings)
-
-    while True:
-        now = ensure_beijing_time(now_provider())
-        next_run = next_run_after(now, schedule_times)
-        wait_seconds = max(0.0, (next_run - now).total_seconds())
-        print(
-            f"下一次执行: {next_run.strftime('%Y-%m-%d %H:%M:%S %Z')}，"
-            f"等待 {int(wait_seconds)} 秒",
-            flush=True,
-        )
-        await sleep_func(wait_seconds)
-
-        started_at = ensure_beijing_time(now_provider())
-        print(f"开始执行: {started_at.strftime('%Y-%m-%d %H:%M:%S %Z')}", flush=True)
-        try:
-            exit_code = await run(settings)
-            print(f"本轮执行结束，状态码: {exit_code}", flush=True)
-        except Exception as exc:
-            print(f"本轮执行异常: {exc}", flush=True)
+    service = SchedulerService(
+        StaticSettingsStore(settings),  # type: ignore[arg-type]
+        now_provider=now_provider,
+        sleep_func=sleep_func,
+    )
+    await service.serve_forever()
 
 
 async def main() -> int:
-    settings = ConfigStore().load()
+    store = ConfigStore()
+    settings = store.load()
     missing = settings.missing_required()
     if missing:
         print(f"缺少必要环境变量: {', '.join(missing)}", flush=True)
         return 2
 
-    await run_scheduler(settings)
+    service = SchedulerService(store)
+    await service.serve_forever()
     return 0
 
 

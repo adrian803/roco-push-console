@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>远行商人推送控制台</title>
+  <link rel="icon" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="64" height="64" rx="16" fill="%230071e3"/%3E%3Cpath d="M18 36h28v10H18zM22 20h20v10H22z" fill="white"/%3E%3C/svg%3E'>
+  <link rel="stylesheet" href="/static/console.css">
+
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>远行商人推送控制台</h1>
+        <div class="sub">插件化推送 · Docker 常驻调度 · 多通道同时发 / 单选 / 主备切换</div>
+      </div>
+      <div class="status-strip">
+        <span id="configuredBadge" class="badge warn">未配置</span>
+        <span id="runningBadge" class="badge">调度器</span>
+        <span id="nowBadge" class="badge mono">--:--</span>
+        <button id="logoutBtn" class="subtle" type="button">退出</button>
+      </div>
+    </header>
+
+    <main>
+      <div>
+        <section>
+          <div class="section-title">
+            <h2>基础配置</h2>
+            <div class="status-strip">
+              <span id="draftBadge" class="badge warn" hidden>有未保存修改</span>
+              <span class="badge">保存后立即重算下次执行</span>
+            </div>
+          </div>
+          <form id="configForm">
+            <div class="grid">
+              <div class="field">
+                <label for="rocom_api_key">ROCOM API Key</label>
+                <input id="rocom_api_key" name="rocom_api_key" type="password" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="game_api_url">数据接口</label>
+                <input id="game_api_url" name="game_api_url" type="url">
+              </div>
+              <div class="field">
+                <label for="schedule_times">北京时间定时</label>
+                <input id="schedule_times" name="schedule_times" class="mono" placeholder="08:01,12:01,16:01,20:01">
+              </div>
+              <div class="field">
+                <label for="http_timeout">请求超时秒数</label>
+                <input id="http_timeout" name="http_timeout" type="number" min="1" max="300">
+              </div>
+              <div class="field">
+                <label for="delivery_mode">发送策略</label>
+                <select id="delivery_mode" name="delivery_mode">
+                  <option value="all">所有启用通道同时发送</option>
+                  <option value="single">只发送选中通道</option>
+                  <option value="failover">主备切换，成功即停</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="selected_provider">选中通道</label>
+                <select id="selected_provider" name="selected_provider"></select>
+              </div>
+              <label class="checkline">
+                <input id="notify_empty" name="notify_empty" type="checkbox">
+                无商品时也推送
+              </label>
+              <label class="checkline">
+                <input id="run_on_start" name="run_on_start" type="checkbox">
+                容器启动后立即执行
+              </label>
+            </div>
+
+            <div class="section-title" style="margin-top: 22px;">
+              <h2>通道配置</h2>
+              <div class="actions" style="margin-top: 0;">
+                <select id="newProviderType"></select>
+                <button id="addProviderBtn" type="button">添加通道</button>
+              </div>
+            </div>
+            <div id="providers" class="providers"></div>
+
+            <div class="actions">
+              <button id="saveBtn" class="primary" type="submit">保存配置</button>
+              <button id="runBtn" type="button">立即执行</button>
+              <button id="testBtn" class="subtle" type="button">按策略测试</button>
+              <button id="refreshBtn" class="subtle" type="button">刷新状态</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <section>
+        <div class="section-title">
+          <h2>状态</h2>
+          <span id="busyBadge" class="badge">空闲</span>
+        </div>
+        <div id="configIssue" class="notice" hidden></div>
+        <div class="kv">
+          <div class="row"><span>下次执行</span><strong id="nextRun">-</strong></div>
+          <div class="row"><span>上次开始</span><strong id="lastStart">-</strong></div>
+          <div class="row"><span>上次结束</span><strong id="lastFinish">-</strong></div>
+          <div class="row"><span>状态码</span><strong id="lastCode">-</strong></div>
+        </div>
+        <div class="actions">
+          <div id="message" class="logbox">等待状态刷新</div>
+        </div>
+        <div class="result-heading">最近推送结果</div>
+        <div id="pushResults" class="result-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/console.js" defer></script>
+
+</body>
+</html>

@@ -1,16 +1,30 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 from typing import Any
 
 import requests
 
 from .config import ConfigStore, Settings
-from .push import DeliveryReport, NotificationMessage, send_delivery
+from .push import DeliveryOptions, DeliveryReport, NotificationMessage, send_delivery
 from .rocom import fetch_merchant_data, process_merchant_data
 
 
-LAST_DELIVERY_REPORT: DeliveryReport | None = None
+@dataclass(frozen=True)
+class RunResult:
+    exit_code: int
+    report: DeliveryReport | None = None
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, int):
+            return self.exit_code == other
+        if isinstance(other, RunResult):
+            return (self.exit_code, self.report) == (other.exit_code, other.report)
+        return False
+
+    def __int__(self) -> int:
+        return self.exit_code
 
 
 def _summary(products: list[dict[str, Any]]) -> str:
@@ -43,40 +57,34 @@ def build_merchant_markdown(processed: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _clear_last_delivery_report() -> None:
-    global LAST_DELIVERY_REPORT
-    LAST_DELIVERY_REPORT = None
-
-
-def _send_and_log(settings: Settings, message: NotificationMessage, session: requests.Session) -> bool:
-    global LAST_DELIVERY_REPORT
+def _send_and_log(settings: Settings, message: NotificationMessage, session: requests.Session) -> DeliveryReport:
     report = send_delivery(
         settings.providers,
         message,
-        mode=settings.delivery_mode,
-        selected_provider=settings.selected_provider,
-        failover_order=settings.failover_order,
-        session=session,
-        timeout=settings.http_timeout,
+        options=DeliveryOptions(
+            mode=settings.delivery_mode,
+            selected_provider=settings.selected_provider,
+            failover_order=settings.failover_order,
+            session=session,
+            timeout=settings.http_timeout,
+        ),
     )
-    LAST_DELIVERY_REPORT = report
     print(f"推送结果：{report.summary()}")
     for result in report.results:
         status = "成功" if result.success else "失败"
         print(f"  - {result.provider_name}({result.provider_type}): {status} {result.message}")
-    return report.success
+    return report
 
 
 def get_last_delivery_report() -> DeliveryReport | None:
-    return LAST_DELIVERY_REPORT
+    return None
 
 
-def run_once(settings: Settings) -> int:
-    _clear_last_delivery_report()
+def run_once(settings: Settings) -> RunResult:
     missing = settings.missing_required()
     if missing:
         print(f"缺少必要环境变量: {', '.join(missing)}")
-        return 2
+        return RunResult(2)
 
     session = requests.Session()
     try:
@@ -89,36 +97,36 @@ def run_once(settings: Settings) -> int:
     except Exception as exc:
         message = f"无法获取远行商人数据: {exc}"
         print(message)
-        _send_and_log(
+        report = _send_and_log(
             settings,
             NotificationMessage("远行商人监控异常", message, message),
             session,
         )
-        return 1
+        return RunResult(1, report)
 
     processed = process_merchant_data(raw_data)
     products = processed.get("products") or []
     if not products and not settings.notify_empty:
         print("当前暂无活跃商品，已按 NOTIFY_EMPTY=false 跳过推送")
-        return 0
+        return RunResult(0)
 
     markdown = build_merchant_markdown(processed)
     title = "远行商人已刷新"
     body = _summary(products)
-    success = _send_and_log(
+    report = _send_and_log(
         settings,
         NotificationMessage(title, body, f"{body}\n\n{markdown}"),
         session,
     )
-    return 0 if success else 1
+    return RunResult(0 if report.success else 1, report)
 
 
-async def run(settings: Settings) -> int:
+async def run(settings: Settings) -> RunResult:
     return await asyncio.to_thread(run_once, settings)
 
 
 async def main() -> int:
-    return await run(ConfigStore().load())
+    return (await run(ConfigStore().load())).exit_code
 
 
 def cli() -> None:

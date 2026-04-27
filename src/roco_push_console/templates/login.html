@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录远行商人推送控制台</title>
+  <link rel="icon" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Crect width="64" height="64" rx="16" fill="%230071e3"/%3E%3Cpath d="M18 36h28v10H18zM22 20h20v10H22z" fill="white"/%3E%3C/svg%3E'>
+  <link rel="stylesheet" href="/static/login.css">
+
+</head>
+<body>
+  <main class="login-shell">
+    <section class="login-card" aria-label="控制台登录">
+      <div class="brand">
+        <div class="brand-top">
+          <div class="app-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64"><path d="M18 36h28v10H18zM22 20h20v10H22z"/></svg>
+          </div>
+          <div class="eyebrow">Docker 控制台 · 19892</div>
+          <div>
+            <h1>远行商人推送控制台</h1>
+            <div class="sub">管理定时任务、数据接口与多通道推送。</div>
+          </div>
+        </div>
+        <div class="brand-bottom">
+          <div class="status-pill"><span class="status-dot"></span><span>本地会话保护已启用</span></div>
+          <div>建议仅在可信网络中访问控制台，并为容器设置独立密码。</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="form-head">
+          <div class="form-title">访问验证</div>
+          <div class="form-sub">输入控制台账号后继续。</div>
+        </div>
+        <form id="loginForm">
+          <label>
+            用户名
+            <input id="username" autocomplete="username" value="__USERNAME__">
+          </label>
+          <label>
+            密码
+            <input id="password" type="password" autocomplete="current-password" autofocus>
+          </label>
+          <button id="loginBtn" type="submit">登录控制台</button>
+          <div id="message" class="message" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+    <div class="footnote">会话凭据使用 HttpOnly Cookie 保存。密码为空时会关闭认证。</div>
+  </main>
+  <script src="/static/login.js" defer></script>
+
+</body>
+</html>

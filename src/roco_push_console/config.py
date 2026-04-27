@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import json
+import threading
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -175,41 +176,46 @@ class ConfigStore:
     def __init__(self, path: str | Path | None = None):
         self.path = Path(path or os.environ.get("CONFIG_PATH", DEFAULT_CONFIG_PATH))
         self.last_load_issue: ConfigLoadIssue | None = None
+        self._lock = threading.RLock()
 
     def load(self) -> Settings:
-        base = Settings.from_env()
-        if not self.path.exists():
-            return base
+        with self._lock:
+            base = Settings.from_env()
+            if not self.path.exists():
+                return base
 
-        try:
-            payload = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            self._record_load_issue(f"配置读取失败，已回退默认配置: {exc}")
-            return base
+            try:
+                payload = json.loads(self.path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                self._record_load_issue(f"配置读取失败，已回退默认配置: {exc}")
+                return base
 
-        if not isinstance(payload, dict):
-            self._record_load_issue("配置文件格式错误，已回退默认配置: 顶层不是 JSON 对象")
-            return base
-        self.last_load_issue = None
-        return Settings.from_mapping(payload, base=base)
+            if not isinstance(payload, dict):
+                self._record_load_issue("配置文件格式错误，已回退默认配置: 顶层不是 JSON 对象")
+                return base
+            self.last_load_issue = None
+            return Settings.from_mapping(payload, base=base)
 
     def save(self, settings: Settings) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temp_path = self.path.with_suffix(self.path.suffix + ".tmp")
-        temp_path.write_text(
-            json.dumps(settings.to_dict(), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        temp_path.replace(self.path)
-        self.last_load_issue = None
+        with self._lock:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            temp_path = self.path.with_suffix(self.path.suffix + ".tmp")
+            temp_path.write_text(
+                json.dumps(settings.to_dict(), ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            temp_path.replace(self.path)
+            self.last_load_issue = None
 
     def update(self, data: dict[str, Any]) -> Settings:
-        settings = Settings.from_mapping(data, base=self.load(), keep_blank_secrets=True)
-        self.save(settings)
-        return settings
+        with self._lock:
+            settings = Settings.from_mapping(data, base=self.load(), keep_blank_secrets=True)
+            self.save(settings)
+            return settings
 
     def load_issue_dict(self) -> dict[str, str] | None:
-        return self.last_load_issue.to_dict() if self.last_load_issue else None
+        with self._lock:
+            return self.last_load_issue.to_dict() if self.last_load_issue else None
 
     def _record_load_issue(self, message: str) -> None:
         backup_path, backup_error = self._backup_invalid_config()
