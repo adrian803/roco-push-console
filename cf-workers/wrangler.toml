@@ -7,7 +7,7 @@ compatibility_date = "2024-12-01"
 crons = ["5 0,4,8,12 * * *"]
 
 [vars]
-ROCOM_API_URL = "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info?refresh=true"
+ROCOM_API_URL = "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info"
 NOTIFY_EMPTY = "false"
 DELIVERY_MODE = "all"
 HTTP_TIMEOUT = "30"

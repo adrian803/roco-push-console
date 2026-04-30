@@ -124,7 +124,7 @@ function providerRequiredFields(providerType) {
 __name(providerRequiredFields, "providerRequiredFields");
 
 // src/config.ts
-var DEFAULT_GAME_API_URL = "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info?refresh=true";
+var DEFAULT_GAME_API_URL = "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info";
 var ENV_PROVIDER_MAPPINGS = [
   {
     type: "serverchan",

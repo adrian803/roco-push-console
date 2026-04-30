@@ -2,7 +2,7 @@ import type { Config, Env, ProviderConfig } from "./types";
 import { PROVIDER_TYPES } from "./provider-specs";
 
 const DEFAULT_GAME_API_URL =
-  "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info?refresh=true";
+  "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info";
 
 interface EnvProviderMapping {
   type: string;

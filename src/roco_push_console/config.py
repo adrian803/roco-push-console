@@ -13,7 +13,7 @@ from .push import ProviderConfig
 
 
 DEFAULT_GAME_API_URL = (
-    "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info?refresh=true"
+    "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info"
 )
 DEFAULT_SCHEDULE_TIMES = "08:05,12:05,16:05,20:05"
 DEFAULT_CONFIG_PATH = "/data/config.json"

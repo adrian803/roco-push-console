@@ -362,7 +362,7 @@ class CoreTests(unittest.TestCase):
 
         self.assertEqual(
             settings.game_api_url,
-            "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info?refresh=true",
+            "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info",
         )
         self.assertEqual(settings.schedule_times, "08:05,12:05,16:05,20:05")
 

@@ -219,6 +219,15 @@ test("loadConfig reads selected provider and failover order from worker vars", (
   ]);
 });
 
+test("loadConfig defaults to cached RoCom merchant endpoint when API URL is blank", () => {
+  const config = loadConfig(env({ ROCOM_API_URL: "" }));
+
+  assert.equal(
+    config.gameApiUrl,
+    "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info"
+  );
+});
+
 test("trigger endpoint rejects invalid token while health remains public", async () => {
   const bindings = env({ TRIGGER_TOKEN: "secret-token" });
 
