@@ -71,7 +71,10 @@ async function runPipeline(env: Env): Promise<PipelineResult> {
     return { exitCode: 0, summary: msg };
   }
 
-  const { title, body, markdown } = buildMessage(processed);
+  const { title, body, markdown } = buildMessage(
+    processed,
+    config.includePriceInfo
+  );
   const report = await sendDelivery(
     config.providers,
     { title, body, markdown },

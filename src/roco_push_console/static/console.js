@@ -201,6 +201,7 @@
         schedule_times: $("schedule_times").value,
         http_timeout: Number($("http_timeout").value || 30),
         notify_empty: $("notify_empty").checked,
+        include_price_info: $("include_price_info").checked,
         run_on_start: $("run_on_start").checked,
         delivery_mode: $("delivery_mode").value,
         selected_provider: $("selected_provider").value,
@@ -219,6 +220,7 @@
         }
       });
       $("notify_empty").checked = !!config.notify_empty;
+      $("include_price_info").checked = !!config.include_price_info;
       $("run_on_start").checked = !!config.run_on_start;
       renderProviders();
       refreshProviderSelects(config);

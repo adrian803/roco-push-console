@@ -3,7 +3,7 @@ import { afterEach, test } from "node:test";
 
 import worker from "../src/index";
 import { loadConfig } from "../src/config";
-import { processMerchantData } from "../src/rocom";
+import { buildMerchantMarkdown, processMerchantData } from "../src/rocom";
 import { sendDelivery } from "../src/push";
 import type { Env, NotificationMessage, ProviderConfig } from "../src/types";
 
@@ -43,6 +43,7 @@ function env(overrides: Partial<Env> = {}): Env {
     SELECTED_PROVIDER: "",
     FAILOVER_ORDER: "",
     HTTP_TIMEOUT: "",
+    INCLUDE_PRICE_INFO: "",
     PUSHPLUS_TOPIC: "",
     PUSHPLUS_CHANNEL: "",
     WECOM_TOUSER: "",
@@ -125,6 +126,55 @@ test("processMerchantData filters by real epoch time in UTC environments", () =>
     assert.equal(processed.productCount, 1);
     assert.equal(processed.products[0]?.name, "当前商品");
   });
+});
+
+test("processMerchantData enriches known goods price and buy limit", () => {
+  withFakeNow("2026-04-26T08:05:00Z", () => {
+    const processed = processMerchantData({
+      merchantActivities: [
+        {
+          name: "远行商人",
+          get_props: [
+            {
+              name: "黑晶琉璃",
+              start_time: originalDate.parse("2026-04-26T08:00:00Z"),
+              end_time: originalDate.parse("2026-04-26T12:00:00Z"),
+            },
+          ],
+          get_pets: [],
+        },
+      ],
+    });
+
+    assert.equal(processed.products[0]?.price, 1000);
+    assert.equal(processed.products[0]?.buyLimitNum, 100);
+  });
+});
+
+test("buildMerchantMarkdown can include price and quantity details", () => {
+  const markdown = buildMerchantMarkdown(
+    {
+      title: "远行商人",
+      subtitle: "",
+      productCount: 1,
+      roundInfo: { current: 3, total: 4, countdown: "3小时" },
+      products: [
+        {
+          name: "黑晶琉璃",
+          image: "",
+          timeLabel: "16:00 - 20:00",
+          price: 1000,
+          buyLimitNum: 100,
+        },
+      ],
+    },
+    true
+  );
+
+  assert.match(
+    markdown,
+    /黑晶琉璃\*100（16:00 - 20:00）单价1000 合计100,000（10万洛克贝）/
+  );
 });
 
 test("_worker.js exports a pasteable worker module", async () => {
@@ -217,6 +267,12 @@ test("loadConfig reads selected provider and failover order from worker vars", (
     "pushplus-env",
     "serverchan-default",
   ]);
+});
+
+test("loadConfig reads include price info flag", () => {
+  const config = loadConfig(env({ INCLUDE_PRICE_INFO: "true" }));
+
+  assert.equal(config.includePriceInfo, true);
 });
 
 test("loadConfig defaults to cached RoCom merchant endpoint when API URL is blank", () => {

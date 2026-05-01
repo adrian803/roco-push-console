@@ -5,6 +5,7 @@ from typing import Any
 
 import requests
 
+from .goods_catalog import goods_price_info_by_name
 from .time_utils import ensure_beijing_time, format_timestamp, get_round_info
 
 
@@ -44,6 +45,14 @@ def _is_active_item(item: dict[str, Any], now_ms: int) -> bool:
         return False
 
 
+def _enrich_price_info(product: dict[str, str], item_name: str) -> dict[str, Any]:
+    enriched: dict[str, Any] = dict(product)
+    info = goods_price_info_by_name().get(item_name.strip())
+    if info:
+        enriched.update(info)
+    return enriched
+
+
 def process_merchant_data(
     data: dict[str, Any],
     *,
@@ -62,7 +71,7 @@ def process_merchant_data(
     pets = activity.get("get_pets") or []
     all_items = [item for item in [*props, *pets] if isinstance(item, dict)]
 
-    active_products: list[dict[str, str]] = []
+    active_products: list[dict[str, Any]] = []
     for item in all_items:
         if not _is_active_item(item, now_ms):
             continue
@@ -74,12 +83,16 @@ def process_merchant_data(
         else:
             time_label = "全天供应"
 
+        name = str(item.get("name") or "未知")
         active_products.append(
-            {
-                "name": str(item.get("name") or "未知"),
-                "image": str(item.get("icon_url") or ""),
-                "time_label": time_label,
-            }
+            _enrich_price_info(
+                {
+                    "name": name,
+                    "image": str(item.get("icon_url") or ""),
+                    "time_label": time_label,
+                },
+                name,
+            )
         )
 
     return {
@@ -92,4 +105,3 @@ def process_merchant_data(
         "background": "img/bg.C8CUoi7I.jpg",
         "titleIcon": True,
     }
-

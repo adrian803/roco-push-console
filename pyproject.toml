@@ -29,6 +29,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 roco_push_console = [
+    "random_goods_conf.json",
     "static/*.css",
     "static/*.js",
     "templates/*.html",

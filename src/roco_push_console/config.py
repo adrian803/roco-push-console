@@ -120,6 +120,7 @@ class Settings:
     selected_provider: str
     failover_order: list[str]
     providers: list[ProviderConfig]
+    include_price_info: bool = False
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -132,6 +133,7 @@ class Settings:
             http_timeout=_env_int("HTTP_TIMEOUT", 30),
             schedule_times=_env_text_or_default("SCHEDULE_TIMES", DEFAULT_SCHEDULE_TIMES),
             run_on_start=_env_bool("RUN_ON_START", False),
+            include_price_info=_env_bool("INCLUDE_PRICE_INFO", False),
             delivery_mode=os.environ.get("DELIVERY_MODE", "all").strip() or "all",
             selected_provider=os.environ.get("SELECTED_PROVIDER", "").strip() or default_provider_id,
             failover_order=_provider_order(providers),
@@ -178,6 +180,7 @@ class Settings:
             http_timeout=max(1, http_timeout),
             schedule_times=text("schedule_times", base.schedule_times) or DEFAULT_SCHEDULE_TIMES,
             run_on_start=_to_bool(data.get("run_on_start"), base.run_on_start),
+            include_price_info=_to_bool(data.get("include_price_info"), base.include_price_info),
             delivery_mode=delivery_mode,
             selected_provider=selected_provider,
             failover_order=_provider_order(providers),
@@ -192,6 +195,7 @@ class Settings:
             "http_timeout": self.http_timeout,
             "schedule_times": self.schedule_times,
             "run_on_start": self.run_on_start,
+            "include_price_info": self.include_price_info,
             "delivery_mode": self.delivery_mode,
             "selected_provider": self.selected_provider,
             "failover_order": list(self.failover_order),

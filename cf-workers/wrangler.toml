@@ -9,6 +9,7 @@ crons = ["5 0,4,8,12 * * *"]
 [vars]
 ROCOM_API_URL = "https://wegame.shallow.ink/api/v1/games/rocom/merchant/info"
 NOTIFY_EMPTY = "false"
+INCLUDE_PRICE_INFO = "false"
 DELIVERY_MODE = "all"
 HTTP_TIMEOUT = "30"
 # Uncomment and set as needed:

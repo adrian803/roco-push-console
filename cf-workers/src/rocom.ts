@@ -1,4 +1,5 @@
 import type { MerchantProduct, ProcessedMerchantData, RoundInfo } from "./types";
+import randomGoodsConf from "./random-goods-conf.json";
 
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -93,6 +94,22 @@ interface MerchantItem {
   end_time?: number | string;
 }
 
+interface RandomGoodsRow {
+  goods_name?: string;
+  enable?: boolean;
+  price?: number | string;
+  buy_limit_num?: number | string;
+}
+
+interface RandomGoodsConf {
+  RocoDataRows?: Record<string, RandomGoodsRow>;
+}
+
+interface GoodsPriceInfo {
+  price: number;
+  buyLimitNum: number;
+}
+
 interface MerchantActivity {
   name?: string;
   start_date?: string;
@@ -112,6 +129,36 @@ function isActiveItem(item: MerchantItem, nowMs: number): boolean {
   } catch {
     return false;
   }
+}
+
+const GOODS_PRICE_INFO_BY_NAME = buildGoodsPriceInfoByName(
+  randomGoodsConf as RandomGoodsConf
+);
+
+function buildGoodsPriceInfoByName(conf: RandomGoodsConf): Map<string, GoodsPriceInfo> {
+  const result = new Map<string, GoodsPriceInfo>();
+  const rows = conf.RocoDataRows || {};
+  for (const row of Object.values(rows)) {
+    if (!row || row.enable === false) continue;
+    const name = (row.goods_name || "").trim();
+    const price = toInt(row.price);
+    const buyLimitNum = toInt(row.buy_limit_num);
+    if (name && price !== null && buyLimitNum !== null) {
+      result.set(name, { price, buyLimitNum });
+    }
+  }
+  return result;
+}
+
+function toInt(value: unknown): number | null {
+  const parsed = typeof value === "string" ? parseInt(value, 10) : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function enrichPriceInfo(product: MerchantProduct): MerchantProduct {
+  const info = GOODS_PRICE_INFO_BY_NAME.get(product.name.trim());
+  if (!info) return product;
+  return { ...product, price: info.price, buyLimitNum: info.buyLimitNum };
 }
 
 export function processMerchantData(
@@ -141,11 +188,13 @@ export function processMerchantData(
       timeLabel = "全天供应";
     }
 
-    activeProducts.push({
-      name: String(item.name || "未知"),
-      image: String(item.icon_url || ""),
-      timeLabel,
-    });
+    activeProducts.push(
+      enrichPriceInfo({
+        name: String(item.name || "未知"),
+        image: String(item.icon_url || ""),
+        timeLabel,
+      })
+    );
   }
 
   return {
@@ -158,7 +207,31 @@ export function processMerchantData(
   };
 }
 
-export function buildMerchantMarkdown(processed: ProcessedMerchantData): string {
+function formatLuokeBay(value: number): string {
+  if (value >= 10000) {
+    const amount = value / 10000;
+    const amountText = amount.toFixed(2).replace(/\.?0+$/, "");
+    return `${amountText}万洛克贝`;
+  }
+  return `${value}洛克贝`;
+}
+
+function productLine(product: MerchantProduct, includePriceInfo: boolean): string {
+  if (
+    includePriceInfo &&
+    typeof product.price === "number" &&
+    typeof product.buyLimitNum === "number"
+  ) {
+    const total = product.price * product.buyLimitNum;
+    return `${product.name}*${product.buyLimitNum}（${product.timeLabel}）单价${product.price} 合计${total.toLocaleString("en-US")}（${formatLuokeBay(total)}）`;
+  }
+  return `${product.name}（${product.timeLabel}）`;
+}
+
+export function buildMerchantMarkdown(
+  processed: ProcessedMerchantData,
+  includePriceInfo = false
+): string {
   const ri = processed.roundInfo;
   const lines = [
     "### 远行商人刷新详情",
@@ -172,7 +245,7 @@ export function buildMerchantMarkdown(processed: ProcessedMerchantData): string 
   if (processed.products.length > 0) {
     lines.push("#### 当前售卖");
     for (const p of processed.products) {
-      lines.push(`- ${p.name}（${p.timeLabel}）`);
+      lines.push(`- ${productLine(p, includePriceInfo)}`);
     }
   } else {
     lines.push("当前暂无活跃商品。");
@@ -187,12 +260,12 @@ function summary(products: MerchantProduct[]): string {
   return `当前售卖: ${names.join("、")}`;
 }
 
-export function buildMessage(processed: ProcessedMerchantData): {
+export function buildMessage(processed: ProcessedMerchantData, includePriceInfo = false): {
   title: string;
   body: string;
   markdown: string;
 } {
-  const markdown = buildMerchantMarkdown(processed);
+  const markdown = buildMerchantMarkdown(processed, includePriceInfo);
   const body = summary(processed.products);
   return {
     title: "远行商人已刷新",

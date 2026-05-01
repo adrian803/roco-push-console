@@ -178,6 +178,7 @@ export function loadConfig(env: Env): Config {
     gameApiUrl: envStr(env, "ROCOM_API_URL") || DEFAULT_GAME_API_URL,
     notifyEmpty: envBool(env, "NOTIFY_EMPTY", false),
     httpTimeout: envInt(env, "HTTP_TIMEOUT", 30),
+    includePriceInfo: envBool(env, "INCLUDE_PRICE_INFO", false),
     deliveryMode: ["all", "single", "failover"].includes(deliveryMode)
       ? deliveryMode
       : "all",

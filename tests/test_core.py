@@ -139,6 +139,35 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(processed["product_count"], 1)
         self.assertEqual(processed["products"][0]["name"], "当前商品")
 
+    def test_process_merchant_data_enriches_known_goods_price_and_limit(self):
+        tz = timezone(timedelta(hours=8))
+        now = datetime(2026, 4, 26, 17, 0, tzinfo=tz)
+        active_start = int(datetime(2026, 4, 26, 16, 0, tzinfo=tz).timestamp() * 1000)
+        active_end = int(datetime(2026, 4, 26, 20, 0, tzinfo=tz).timestamp() * 1000)
+
+        processed = process_merchant_data(
+            {
+                "merchantActivities": [
+                    {
+                        "name": "远行商人",
+                        "get_props": [
+                            {
+                                "name": "黑晶琉璃",
+                                "start_time": active_start,
+                                "end_time": active_end,
+                            }
+                        ],
+                        "get_pets": [],
+                    }
+                ]
+            },
+            now=now,
+        )
+
+        product = processed["products"][0]
+        self.assertEqual(product["price"], 1000)
+        self.assertEqual(product["buy_limit_num"], 100)
+
     def test_merchant_markdown_contains_products(self):
         processed = {
             "round_info": {"current": 1, "total": 4, "countdown": "3小时"},
@@ -149,6 +178,47 @@ class CoreTests(unittest.TestCase):
 
         self.assertIn("咕噜球", markdown)
         self.assertIn("当前轮次：1/4", markdown)
+
+    def test_merchant_markdown_can_include_price_and_quantity(self):
+        processed = {
+            "round_info": {"current": 3, "total": 4, "countdown": "3小时"},
+            "products": [
+                {
+                    "name": "黑晶琉璃",
+                    "time_label": "16:00 - 20:00",
+                    "price": 1000,
+                    "buy_limit_num": 100,
+                }
+            ],
+        }
+
+        markdown = build_merchant_markdown(processed, include_price_info=True)
+
+        self.assertIn("黑晶琉璃*100（16:00 - 20:00）单价1000 合计100,000（10万洛克贝）", markdown)
+
+    def test_merchant_markdown_omits_price_and_quantity_by_default(self):
+        processed = {
+            "round_info": {"current": 3, "total": 4, "countdown": "3小时"},
+            "products": [
+                {
+                    "name": "黑晶琉璃",
+                    "time_label": "16:00 - 20:00",
+                    "price": 1000,
+                    "buy_limit_num": 100,
+                }
+            ],
+        }
+
+        markdown = build_merchant_markdown(processed)
+
+        self.assertIn("黑晶琉璃（16:00 - 20:00）", markdown)
+        self.assertNotIn("单价1000", markdown)
+
+    def test_settings_reads_include_price_info_from_env(self):
+        with patch.dict("os.environ", {"INCLUDE_PRICE_INFO": "true"}, clear=True):
+            settings = Settings.from_env()
+
+        self.assertTrue(settings.include_price_info)
 
     def test_parse_schedule_times_sorts_times(self):
         times = parse_schedule_times("20:01,08:01,12:01")

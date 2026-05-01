@@ -53,6 +53,7 @@ jobs:
       GOTIFY_APP_TOKEN: ${{ secrets.GOTIFY_APP_TOKEN }}
       GOTIFY_PRIORITY: ${{ vars.GOTIFY_PRIORITY }}
       NOTIFY_EMPTY: ${{ vars.NOTIFY_EMPTY || 'false' }}
+      INCLUDE_PRICE_INFO: ${{ vars.INCLUDE_PRICE_INFO || 'false' }}
       DELIVERY_MODE: ${{ vars.DELIVERY_MODE || 'all' }}
       HTTP_TIMEOUT: ${{ vars.HTTP_TIMEOUT || '30' }}
 

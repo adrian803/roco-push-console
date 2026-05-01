@@ -277,6 +277,7 @@ function loadConfig(env) {
     gameApiUrl: envStr(env, "ROCOM_API_URL") || DEFAULT_GAME_API_URL,
     notifyEmpty: envBool(env, "NOTIFY_EMPTY", false),
     httpTimeout: envInt(env, "HTTP_TIMEOUT", 30),
+    includePriceInfo: envBool(env, "INCLUDE_PRICE_INFO", false),
     deliveryMode: ["all", "single", "failover"].includes(deliveryMode) ? deliveryMode : "all",
     selectedProvider,
     failoverOrder: requestedFailoverOrder.length > 0 ? requestedFailoverOrder : enabledProviderIds,
@@ -291,6 +292,811 @@ function missingRequired(config) {
   return missing;
 }
 __name(missingRequired, "missingRequired");
+
+// src/random-goods-conf.json
+var random_goods_conf_default = {
+  RocoDataRows: {
+    "67001": {
+      id: 67001,
+      goods_name: "\u9ED1\u6676\u7409\u7483",
+      package_id: 1,
+      enable: true,
+      Type: 1,
+      item_id: 100628,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 1e3,
+      price: 1e3,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67002": {
+      id: 67002,
+      goods_name: "\u9EC4\u77F3\u69B4\u77F3",
+      package_id: 2,
+      enable: true,
+      Type: 1,
+      item_id: 100675,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 1e3,
+      price: 1e3,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67003": {
+      id: 67003,
+      goods_name: "\u84DD\u6676\u78A7\u73BA",
+      package_id: 3,
+      enable: true,
+      Type: 1,
+      item_id: 100676,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 1e3,
+      price: 1e3,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67004": {
+      id: 67004,
+      goods_name: "\u7D2B\u83B2\u521A\u7389",
+      package_id: 4,
+      enable: true,
+      Type: 1,
+      item_id: 100677,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 1e3,
+      price: 1e3,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67005": {
+      id: 67005,
+      goods_name: "\u9B54\u529B\u679C",
+      package_id: 5,
+      enable: true,
+      Type: 1,
+      item_id: 100213,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 6e3,
+      price: 6e3,
+      buy_limit_num: 20,
+      weight: 1
+    },
+    "67006": {
+      id: 67006,
+      goods_name: "\u8349\u7CFB\u7C89\u5C18",
+      package_id: 6,
+      enable: true,
+      Type: 1,
+      item_id: 100121,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67007": {
+      id: 67007,
+      goods_name: "\u706B\u7CFB\u7C89\u5C18",
+      package_id: 7,
+      enable: true,
+      Type: 1,
+      item_id: 100122,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67008": {
+      id: 67008,
+      goods_name: "\u6C34\u7CFB\u7C89\u5C18",
+      package_id: 8,
+      enable: true,
+      Type: 1,
+      item_id: 100123,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67009": {
+      id: 67009,
+      goods_name: "\u5149\u7CFB\u7C89\u5C18",
+      package_id: 9,
+      enable: true,
+      Type: 1,
+      item_id: 100124,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67010": {
+      id: 67010,
+      goods_name: "\u6076\u7CFB\u7C89\u5C18",
+      package_id: 10,
+      enable: true,
+      Type: 1,
+      item_id: 100125,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67011": {
+      id: 67011,
+      goods_name: "\u5E7D\u7CFB\u7C89\u5C18",
+      package_id: 11,
+      enable: true,
+      Type: 1,
+      item_id: 100126,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67012": {
+      id: 67012,
+      goods_name: "\u666E\u901A\u7C89\u5C18",
+      package_id: 12,
+      enable: true,
+      Type: 1,
+      item_id: 100127,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67013": {
+      id: 67013,
+      goods_name: "\u5730\u7CFB\u7C89\u5C18",
+      package_id: 13,
+      enable: true,
+      Type: 1,
+      item_id: 100129,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67014": {
+      id: 67014,
+      goods_name: "\u51B0\u7CFB\u7C89\u5C18",
+      package_id: 14,
+      enable: true,
+      Type: 1,
+      item_id: 100130,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67015": {
+      id: 67015,
+      goods_name: "\u9F99\u7CFB\u7C89\u5C18",
+      package_id: 15,
+      enable: true,
+      Type: 1,
+      item_id: 100131,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67016": {
+      id: 67016,
+      goods_name: "\u7535\u7CFB\u7C89\u5C18",
+      package_id: 16,
+      enable: true,
+      Type: 1,
+      item_id: 100132,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67017": {
+      id: 67017,
+      goods_name: "\u6BD2\u7CFB\u7C89\u5C18",
+      package_id: 17,
+      enable: true,
+      Type: 1,
+      item_id: 100133,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67018": {
+      id: 67018,
+      goods_name: "\u866B\u7CFB\u7C89\u5C18",
+      package_id: 18,
+      enable: true,
+      Type: 1,
+      item_id: 100134,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67019": {
+      id: 67019,
+      goods_name: "\u6B66\u7CFB\u7C89\u5C18",
+      package_id: 19,
+      enable: true,
+      Type: 1,
+      item_id: 100135,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67020": {
+      id: 67020,
+      goods_name: "\u7FFC\u7CFB\u7C89\u5C18",
+      package_id: 20,
+      enable: true,
+      Type: 1,
+      item_id: 100136,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67021": {
+      id: 67021,
+      goods_name: "\u840C\u7CFB\u7C89\u5C18",
+      package_id: 21,
+      enable: true,
+      Type: 1,
+      item_id: 100137,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67022": {
+      id: 67022,
+      goods_name: "\u673A\u68B0\u7C89\u5C18",
+      package_id: 22,
+      enable: true,
+      Type: 1,
+      item_id: 100138,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "67023": {
+      id: 67023,
+      goods_name: "\u5E7B\u7CFB\u7C89\u5C18",
+      package_id: 23,
+      enable: true,
+      Type: 1,
+      item_id: 100139,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 500,
+      price: 500,
+      buy_limit_num: 100,
+      weight: 1
+    },
+    "68001": {
+      id: 68001,
+      goods_name: "\u56FD\u738B\u7403",
+      package_id: 24,
+      enable: true,
+      Type: 1,
+      item_id: 100255,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68002": {
+      id: 68002,
+      goods_name: "\u68F1\u955C\u7403",
+      package_id: 25,
+      enable: true,
+      Type: 1,
+      item_id: 100286,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 32e5,
+      price: 32e5,
+      buy_limit_num: 1,
+      enable_time: "2026-04-02 08:00:00",
+      weight: 1
+    },
+    "68003": {
+      id: 68003,
+      goods_name: "\u795E\u5947\u7684\u86CB",
+      package_id: 26,
+      enable: true,
+      Type: 1,
+      item_id: 310049,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 36e3,
+      price: 36e3,
+      buy_limit_num: 5,
+      weight: 1
+    },
+    "68004": {
+      id: 68004,
+      goods_name: "\u70AB\u5F69\u86CB",
+      package_id: 27,
+      enable: true,
+      Type: 1,
+      item_id: 310050,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e5,
+      price: 16e5,
+      buy_limit_num: 1,
+      enable_time: "2026-03-27 08:00:00",
+      weight: 1
+    },
+    "68005": {
+      id: 68005,
+      goods_name: "\u666E\u901A\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102001,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68006": {
+      id: 68006,
+      goods_name: "\u8349\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102002,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68007": {
+      id: 68007,
+      goods_name: "\u706B\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102003,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68008": {
+      id: 68008,
+      goods_name: "\u6C34\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102004,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68009": {
+      id: 68009,
+      goods_name: "\u5149\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102005,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68010": {
+      id: 68010,
+      goods_name: "\u5730\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102006,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68011": {
+      id: 68011,
+      goods_name: "\u51B0\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102007,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68012": {
+      id: 68012,
+      goods_name: "\u9F99\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102008,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68013": {
+      id: 68013,
+      goods_name: "\u7535\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102009,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68014": {
+      id: 68014,
+      goods_name: "\u6BD2\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102010,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68015": {
+      id: 68015,
+      goods_name: "\u866B\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102011,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68016": {
+      id: 68016,
+      goods_name: "\u6B66\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102012,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68017": {
+      id: 68017,
+      goods_name: "\u7FFC\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102013,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68018": {
+      id: 68018,
+      goods_name: "\u840C\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102014,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68019": {
+      id: 68019,
+      goods_name: "\u5E7D\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102015,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68020": {
+      id: 68020,
+      goods_name: "\u6076\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102016,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68021": {
+      id: 68021,
+      goods_name: "\u673A\u68B0\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102017,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68022": {
+      id: 68022,
+      goods_name: "\u5E7B\u7CFB\u8840\u8109\u79D8\u836F",
+      package_id: 28,
+      enable: true,
+      Type: 1,
+      item_id: 102018,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68023": {
+      id: 68023,
+      goods_name: "\u5947\u5F02\u8840\u8109\u79D8\u836F",
+      package_id: 29,
+      enable: true,
+      Type: 1,
+      item_id: 102024,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      weight: 1
+    },
+    "68024": {
+      id: 68024,
+      goods_name: "\u9996\u9886\u8840\u8109\u79D8\u836F",
+      package_id: 30,
+      enable: true,
+      Type: 1,
+      item_id: 102023,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 32e4,
+      price: 32e4,
+      buy_limit_num: 1,
+      weight: 1
+    },
+    "68025": {
+      id: 68025,
+      goods_name: "\u795D\u798F\u9879\u5760",
+      package_id: 31,
+      enable: true,
+      Type: 2,
+      item_id: 64,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 8e5,
+      price: 8e5,
+      buy_limit_num: 1,
+      enable_time: "2026-04-02 08:00:00",
+      weight: 1
+    },
+    "100001": {
+      id: 100001,
+      goods_name: "\u56FD\u738B\u7403",
+      goods_group_id: 1,
+      enable: true,
+      Type: 1,
+      item_id: 100255,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e4,
+      price: 16e4,
+      buy_limit_num: 3,
+      is_special_good: true
+    },
+    "100002": {
+      id: 100002,
+      goods_name: "\u68F1\u955C\u7403",
+      goods_group_id: 2,
+      enable: true,
+      Type: 1,
+      item_id: 100286,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 32e5,
+      price: 32e5,
+      buy_limit_num: 1,
+      is_special_good: true
+    },
+    "100003": {
+      id: 100003,
+      goods_name: "\u795E\u5947\u7684\u86CB",
+      goods_group_id: 3,
+      enable: true,
+      Type: 1,
+      item_id: 310049,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 36e3,
+      price: 36e3,
+      buy_limit_num: 5,
+      is_special_good: true
+    },
+    "100004": {
+      id: 100004,
+      goods_name: "\u9ED1\u767D\u70AB\u5F69\u86CB",
+      goods_group_id: 4,
+      enable: true,
+      Type: 1,
+      item_id: 310051,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e6,
+      price: 16e5,
+      buy_limit_num: 1,
+      is_special_good: true
+    },
+    "100005": {
+      id: 100005,
+      goods_name: "\u8D5B\u5B63\u70AB\u5F69\u86CB",
+      goods_group_id: 5,
+      enable: true,
+      Type: 1,
+      item_id: 310052,
+      item_num: 1,
+      price_goods_type: 2,
+      price_goods_id: 1,
+      origin_price: 16e6,
+      price: 16e6,
+      buy_limit_num: 1,
+      is_special_good: true
+    }
+  },
+  LocalizationStrings: {}
+};
 
 // src/rocom.ts
 var BEIJING_OFFSET_MS = 8 * 60 * 60 * 1e3;
@@ -371,6 +1177,35 @@ function isActiveItem(item, nowMs) {
   }
 }
 __name(isActiveItem, "isActiveItem");
+var GOODS_PRICE_INFO_BY_NAME = buildGoodsPriceInfoByName(
+  random_goods_conf_default
+);
+function buildGoodsPriceInfoByName(conf) {
+  const result = /* @__PURE__ */ new Map();
+  const rows = conf.RocoDataRows || {};
+  for (const row of Object.values(rows)) {
+    if (!row || row.enable === false) continue;
+    const name = (row.goods_name || "").trim();
+    const price = toInt(row.price);
+    const buyLimitNum = toInt(row.buy_limit_num);
+    if (name && price !== null && buyLimitNum !== null) {
+      result.set(name, { price, buyLimitNum });
+    }
+  }
+  return result;
+}
+__name(buildGoodsPriceInfoByName, "buildGoodsPriceInfoByName");
+function toInt(value) {
+  const parsed = typeof value === "string" ? parseInt(value, 10) : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+__name(toInt, "toInt");
+function enrichPriceInfo(product) {
+  const info = GOODS_PRICE_INFO_BY_NAME.get(product.name.trim());
+  if (!info) return product;
+  return { ...product, price: info.price, buyLimitNum: info.buyLimitNum };
+}
+__name(enrichPriceInfo, "enrichPriceInfo");
 function processMerchantData(data) {
   const nowMs = getBeijingNowMs();
   const roundInfo = getRoundInfo();
@@ -390,11 +1225,13 @@ function processMerchantData(data) {
     } else {
       timeLabel = "\u5168\u5929\u4F9B\u5E94";
     }
-    activeProducts.push({
-      name: String(item.name || "\u672A\u77E5"),
-      image: String(item.icon_url || ""),
-      timeLabel
-    });
+    activeProducts.push(
+      enrichPriceInfo({
+        name: String(item.name || "\u672A\u77E5"),
+        image: String(item.icon_url || ""),
+        timeLabel
+      })
+    );
   }
   return {
     title: activity.name || "\u8FDC\u884C\u5546\u4EBA",
@@ -405,7 +1242,24 @@ function processMerchantData(data) {
   };
 }
 __name(processMerchantData, "processMerchantData");
-function buildMerchantMarkdown(processed) {
+function formatLuokeBay(value) {
+  if (value >= 1e4) {
+    const amount = value / 1e4;
+    const amountText = amount.toFixed(2).replace(/\.?0+$/, "");
+    return `${amountText}\u4E07\u6D1B\u514B\u8D1D`;
+  }
+  return `${value}\u6D1B\u514B\u8D1D`;
+}
+__name(formatLuokeBay, "formatLuokeBay");
+function productLine(product, includePriceInfo) {
+  if (includePriceInfo && typeof product.price === "number" && typeof product.buyLimitNum === "number") {
+    const total = product.price * product.buyLimitNum;
+    return `${product.name}*${product.buyLimitNum}\uFF08${product.timeLabel}\uFF09\u5355\u4EF7${product.price} \u5408\u8BA1${total.toLocaleString("en-US")}\uFF08${formatLuokeBay(total)}\uFF09`;
+  }
+  return `${product.name}\uFF08${product.timeLabel}\uFF09`;
+}
+__name(productLine, "productLine");
+function buildMerchantMarkdown(processed, includePriceInfo = false) {
   const ri = processed.roundInfo;
   const lines = [
     "### \u8FDC\u884C\u5546\u4EBA\u5237\u65B0\u8BE6\u60C5",
@@ -418,7 +1272,7 @@ function buildMerchantMarkdown(processed) {
   if (processed.products.length > 0) {
     lines.push("#### \u5F53\u524D\u552E\u5356");
     for (const p of processed.products) {
-      lines.push(`- ${p.name}\uFF08${p.timeLabel}\uFF09`);
+      lines.push(`- ${productLine(p, includePriceInfo)}`);
     }
   } else {
     lines.push("\u5F53\u524D\u6682\u65E0\u6D3B\u8DC3\u5546\u54C1\u3002");
@@ -432,8 +1286,8 @@ function summary(products) {
   return `\u5F53\u524D\u552E\u5356: ${names.join("\u3001")}`;
 }
 __name(summary, "summary");
-function buildMessage(processed) {
-  const markdown = buildMerchantMarkdown(processed);
+function buildMessage(processed, includePriceInfo = false) {
+  const markdown = buildMerchantMarkdown(processed, includePriceInfo);
   const body = summary(processed.products);
   return {
     title: "\u8FDC\u884C\u5546\u4EBA\u5DF2\u5237\u65B0",
@@ -1054,7 +1908,10 @@ async function runPipeline(env) {
     console.log(msg);
     return { exitCode: 0, summary: msg };
   }
-  const { title, body, markdown } = buildMessage(processed);
+  const { title, body, markdown } = buildMessage(
+    processed,
+    config.includePriceInfo
+  );
   const report = await sendDelivery(
     config.providers,
     { title, body, markdown },

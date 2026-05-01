@@ -27,6 +27,7 @@ export interface Env {
   SELECTED_PROVIDER: string;
   FAILOVER_ORDER: string;
   HTTP_TIMEOUT: string;
+  INCLUDE_PRICE_INFO: string;
   PUSHPLUS_TOPIC: string;
   PUSHPLUS_CHANNEL: string;
   WECOM_TOUSER: string;
@@ -89,6 +90,7 @@ export interface Config {
   gameApiUrl: string;
   notifyEmpty: boolean;
   httpTimeout: number;
+  includePriceInfo: boolean;
   deliveryMode: string;
   selectedProvider: string;
   failoverOrder: string[];
@@ -99,6 +101,8 @@ export interface MerchantProduct {
   name: string;
   image: string;
   timeLabel: string;
+  price?: number;
+  buyLimitNum?: number;
 }
 
 export interface RoundInfo {
