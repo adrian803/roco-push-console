@@ -8,8 +8,8 @@ try:
 except ImportError:
     from helpers import FakeResponse, FakeSession
 
-from roco_push_console.push_models import ProviderConfig
-from roco_push_console.push_provider_auth import (
+from roco_serverchan_notifier.push_models import ProviderConfig
+from roco_serverchan_notifier.push_provider_auth import (
     _WECOM_TOKEN_CACHE,
     append_dingtalk_sign,
     feishu_sign,

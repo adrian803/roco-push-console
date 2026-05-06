@@ -38,7 +38,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 19892
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD python -m roco_push_console.healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD python -m roco_serverchan_notifier.healthcheck
 
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["python", "-m", "roco_push_console.launcher"]
+CMD ["python", "-m", "roco_serverchan_notifier.launcher"]

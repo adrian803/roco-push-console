@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from roco_push_console.settings import DEFAULT_GAME_API_URL, DEFAULT_SCHEDULE_TIMES, Settings
+from roco_serverchan_notifier.settings import DEFAULT_GAME_API_URL, DEFAULT_SCHEDULE_TIMES, Settings
 
 
 class SettingsModuleTests(unittest.TestCase):

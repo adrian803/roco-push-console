@@ -1,4 +1,4 @@
-import providerManifest from "../../src/roco_push_console/shared/provider_manifest.json";
+import providerManifest from "../../src/roco_serverchan_notifier/shared/provider_manifest.json";
 import type { ProviderSpec } from "./types";
 
 type ProviderManifestEntry = ProviderSpec & { type: string };

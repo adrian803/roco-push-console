@@ -15,7 +15,7 @@ dry_run=0
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/.." && pwd)"
-worker_dir="${repo_root}/cf-workers"
+worker_dir="${repo_root}/cloudflare-worker"
 wrangler_toml="${worker_dir}/wrangler.toml"
 worker_js_path="${worker_dir}/_worker.js"
 worker_js_temp_config="${worker_dir}/.wrangler-worker-js.tmp.toml"
@@ -156,7 +156,7 @@ cleanup() {
 }
 
 if [ ! -d "$worker_dir" ]; then
-  echo "找不到 cf-workers 目录：$worker_dir" >&2
+  echo "找不到 cloudflare-worker 目录：$worker_dir" >&2
   exit 1
 fi
 if [ ! -f "$wrangler_toml" ]; then

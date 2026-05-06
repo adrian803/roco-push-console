@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from roco_push_console.config_store import ConfigStore
+from roco_serverchan_notifier.config_store import ConfigStore
 
 
 class ConfigStoreModuleTests(unittest.TestCase):

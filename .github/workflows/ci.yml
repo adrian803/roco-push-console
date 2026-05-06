@@ -47,20 +47,20 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: cf-workers/package-lock.json
+          cache-dependency-path: cloudflare-worker/package-lock.json
 
       - name: Install CF Worker dependencies
-        working-directory: cf-workers
+        working-directory: cloudflare-worker
         run: npm ci
 
       - name: Run CF Worker tests
-        working-directory: cf-workers
+        working-directory: cloudflare-worker
         run: npm test
 
       - name: Type-check CF Worker
-        working-directory: cf-workers
+        working-directory: cloudflare-worker
         run: npx tsc --noEmit
 
       - name: Validate pasteable Worker bundle
-        working-directory: cf-workers
+        working-directory: cloudflare-worker
         run: npm run check:worker

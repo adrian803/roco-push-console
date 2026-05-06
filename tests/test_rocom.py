@@ -8,8 +8,8 @@ try:
 except ImportError:
     from helpers import RocoTestCase, load_cross_runtime_fixture
 
-from roco_push_console.merchant_message import build_merchant_markdown
-from roco_push_console.provider_specs import (
+from roco_serverchan_notifier.merchant_message import build_merchant_markdown
+from roco_serverchan_notifier.provider_specs import (
     PROVIDER_TYPES,
     provider_env_binding_names,
     provider_env_fields,
@@ -18,8 +18,8 @@ from roco_push_console.provider_specs import (
     provider_secret_fields,
     validate_provider_manifest,
 )
-from roco_push_console.rocom import process_merchant_data
-from roco_push_console.time_utils import get_round_info
+from roco_serverchan_notifier.rocom import process_merchant_data
+from roco_serverchan_notifier.time_utils import get_round_info
 
 
 

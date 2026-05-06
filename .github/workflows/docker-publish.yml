@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE_NAME: ${{ vars.DOCKERHUB_REPOSITORY || 'linxi5013/roco-push-console' }}
+  IMAGE_NAME: ${{ vars.DOCKERHUB_REPOSITORY || 'linxi5013/roco-serverchan-notifier' }}
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 

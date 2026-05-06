@@ -35,7 +35,7 @@ def session_secret(store: ConfigStore) -> bytes:
         seed = stored_console_password_hash(store)
     if not seed:
         password = auth_password(store)
-        seed = stored_console_password_hash(store) or password or "roco-push-console"
+        seed = stored_console_password_hash(store) or password or "roco-serverchan-notifier"
     return seed.encode("utf-8")
 
 

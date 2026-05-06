@@ -7,8 +7,8 @@ try:
 except ImportError:
     from helpers import FakeResponse, FakeSession
 
-from roco_push_console.push_http import JsonPostRequest, post_json
-from roco_push_console.push_models import ProviderConfig
+from roco_serverchan_notifier.push_http import JsonPostRequest, post_json
+from roco_serverchan_notifier.push_models import ProviderConfig
 
 
 class PushHttpTests(unittest.TestCase):

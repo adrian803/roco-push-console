@@ -153,7 +153,7 @@ async def api_test_push(request: Request) -> JSONResponse:
 def cli() -> None:
     host = os.environ.get("WEB_HOST", "0.0.0.0")
     port = int(os.environ.get("WEB_PORT", "19892"))
-    uvicorn.run("roco_push_console.web:app", host=host, port=port)
+    uvicorn.run("roco_serverchan_notifier.web:app", host=host, port=port)
 
 
 def _read_template(name: str) -> str:

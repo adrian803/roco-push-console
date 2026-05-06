@@ -12,8 +12,8 @@ try:
 except ImportError:
     from helpers import RocoTestCase
 
-from roco_push_console.config import ConfigStore, Settings
-from roco_push_console.push import ProviderConfig
+from roco_serverchan_notifier.config import ConfigStore, Settings
+from roco_serverchan_notifier.push import ProviderConfig
 
 
 
@@ -117,7 +117,7 @@ class ConfigTests(RocoTestCase):
             self.assertFalse(path.exists())
 
     def test_launcher_normalizes_headless_modes(self):
-        from roco_push_console.launcher import normalize_app_mode
+        from roco_serverchan_notifier.launcher import normalize_app_mode
 
         self.assertEqual(normalize_app_mode(""), "auto")
         self.assertEqual(normalize_app_mode("auto"), "auto")
@@ -128,7 +128,7 @@ class ConfigTests(RocoTestCase):
         self.assertEqual(normalize_app_mode("once"), "once")
 
     def test_launcher_auto_mode_dispatches_scheduler_when_keys_are_configured(self):
-        from roco_push_console import launcher
+        from roco_serverchan_notifier import launcher
 
         env = {
             "ROCOM_API_KEY": "rocom-key",
@@ -148,7 +148,7 @@ class ConfigTests(RocoTestCase):
         web_cli.assert_not_called()
 
     def test_launcher_auto_mode_keeps_web_when_required_keys_are_missing(self):
-        from roco_push_console import launcher
+        from roco_serverchan_notifier import launcher
 
         with patch.dict("os.environ", {}, clear=True), patch.object(
             launcher.web,
@@ -163,7 +163,7 @@ class ConfigTests(RocoTestCase):
         scheduler_cli.assert_not_called()
 
     def test_launcher_dispatches_scheduler_mode(self):
-        from roco_push_console import launcher
+        from roco_serverchan_notifier import launcher
 
         with patch.dict("os.environ", {"APP_MODE": "scheduler"}), patch.object(
             launcher.scheduler,
@@ -177,7 +177,7 @@ class ConfigTests(RocoTestCase):
         scheduler_cli.assert_called_once_with()
 
     def test_healthcheck_skips_socket_for_scheduler_mode(self):
-        from roco_push_console import healthcheck
+        from roco_serverchan_notifier import healthcheck
 
         with patch.dict("os.environ", {"APP_MODE": "scheduler"}), patch(
             "socket.create_connection"
@@ -187,7 +187,7 @@ class ConfigTests(RocoTestCase):
         create_connection.assert_not_called()
 
     def test_healthcheck_skips_socket_when_auto_mode_resolves_to_scheduler(self):
-        from roco_push_console import healthcheck
+        from roco_serverchan_notifier import healthcheck
 
         env = {
             "ROCOM_API_KEY": "rocom-key",

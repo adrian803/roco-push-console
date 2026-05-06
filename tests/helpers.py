@@ -10,8 +10,8 @@ SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from roco_push_console.config import Settings
-from roco_push_console.push import ProviderConfig
+from roco_serverchan_notifier.config import Settings
+from roco_serverchan_notifier.push import ProviderConfig
 
 FIXTURE_PATH = Path(__file__).resolve().parent / "fixtures" / "cross_runtime_cases.json"
 

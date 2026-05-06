@@ -5,7 +5,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// ../src/roco_push_console/shared/provider_manifest.json
+// ../src/roco_serverchan_notifier/shared/provider_manifest.json
 var provider_manifest_default = {
   providers: [
     {

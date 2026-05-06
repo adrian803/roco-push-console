@@ -7,9 +7,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from roco_push_console.config import ConfigStore
-from roco_push_console.push import DeliveryReport, PushResult
-from roco_push_console.web_services import (
+from roco_serverchan_notifier.config import ConfigStore
+from roco_serverchan_notifier.push import DeliveryReport, PushResult
+from roco_serverchan_notifier.web_services import (
     build_state_payload,
     save_config_payload,
     send_test_push,
@@ -78,7 +78,7 @@ class WebServicesTests(RocoTestCase):
             session = FakeSession()
             result = PushResult("serverchan-default", "Server 酱", "serverchan", True, "ok")
 
-            with patch("roco_push_console.web_services.send_provider", return_value=result) as send_mock:
+            with patch("roco_serverchan_notifier.web_services.send_provider", return_value=result) as send_mock:
                 payload = asyncio.run(
                     send_test_push(
                         store,
@@ -98,7 +98,7 @@ class WebServicesTests(RocoTestCase):
             result = PushResult("p1", "通道", "serverchan", True, "ok")
             report = DeliveryReport(True, "all", [result])
 
-            with patch("roco_push_console.web_services.send_delivery", return_value=report):
+            with patch("roco_serverchan_notifier.web_services.send_delivery", return_value=report):
                 payload = asyncio.run(send_test_push(store, {"config": self.make_settings().to_dict()}))
 
         self.assertEqual(payload["message"], "测试推送已发送")

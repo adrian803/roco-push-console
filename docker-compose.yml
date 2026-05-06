@@ -1,8 +1,8 @@
 services:
-  roco-push-console:
+  roco-serverchan-notifier:
     build: .
-    image: ${DOCKER_IMAGE:-linxi5013/roco-push-console:latest}
-    container_name: roco-push-console
+    image: ${DOCKER_IMAGE:-linxi5013/roco-serverchan-notifier:latest}
+    container_name: roco-serverchan-notifier
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-19892}:19892"

@@ -10,10 +10,10 @@ try:
 except ImportError:
     from helpers import FakeResponse, FakeSession, RocoTestCase, SessionFactory, load_cross_runtime_fixture
 
-from roco_push_console import app as app_module
-from roco_push_console import push as push_module
-from roco_push_console.provider_specs import PROVIDER_TYPES
-from roco_push_console.push import (
+from roco_serverchan_notifier import app as app_module
+from roco_serverchan_notifier import push as push_module
+from roco_serverchan_notifier.provider_specs import PROVIDER_TYPES
+from roco_serverchan_notifier.push import (
     DeliveryReport,
     NotificationMessage,
     PROVIDER_SENDERS,
@@ -28,10 +28,10 @@ from roco_push_console.push import (
 
 class PushDeliveryTests(RocoTestCase):
     def test_push_provider_senders_are_grouped_by_family_modules(self):
-        registry = importlib.import_module("roco_push_console.push_provider_senders.registry")
-        token = importlib.import_module("roco_push_console.push_provider_senders.token")
-        webhook = importlib.import_module("roco_push_console.push_provider_senders.webhook")
-        wecom = importlib.import_module("roco_push_console.push_provider_senders.wecom")
+        registry = importlib.import_module("roco_serverchan_notifier.push_provider_senders.registry")
+        token = importlib.import_module("roco_serverchan_notifier.push_provider_senders.token")
+        webhook = importlib.import_module("roco_serverchan_notifier.push_provider_senders.webhook")
+        wecom = importlib.import_module("roco_serverchan_notifier.push_provider_senders.wecom")
 
         self.assertEqual(set(registry.PROVIDER_SENDERS), set(PROVIDER_SENDERS))
         self.assertEqual(set(registry.PROVIDER_SENDERS), set(PROVIDER_TYPES))

@@ -13,17 +13,17 @@ try:
 except ImportError:
     from helpers import RocoTestCase
 
-from roco_push_console import app as app_module
-from roco_push_console.config import ConfigStore
-from roco_push_console.push import DeliveryReport, PushResult
-from roco_push_console.scheduler import SchedulerService, SchedulerState, next_run_after, parse_schedule_times
+from roco_serverchan_notifier import app as app_module
+from roco_serverchan_notifier.config import ConfigStore
+from roco_serverchan_notifier.push import DeliveryReport, PushResult
+from roco_serverchan_notifier.scheduler import SchedulerService, SchedulerState, next_run_after, parse_schedule_times
 
 
 
 class SchedulerTests(RocoTestCase):
     def test_scheduler_delegates_policy_and_state_modules(self):
-        policy = importlib.import_module("roco_push_console.schedule_policy")
-        state = importlib.import_module("roco_push_console.scheduler_state")
+        policy = importlib.import_module("roco_serverchan_notifier.schedule_policy")
+        state = importlib.import_module("roco_serverchan_notifier.scheduler_state")
 
         self.assertIs(parse_schedule_times, policy.parse_schedule_times)
         self.assertIs(next_run_after, policy.next_run_after)
@@ -59,7 +59,7 @@ class SchedulerTests(RocoTestCase):
                 scheduler = SchedulerService(store)
                 scheduler.state.last_push_results = [{"provider_name": "旧结果"}]
                 with patch(
-                    "roco_push_console.scheduler.run",
+                    "roco_serverchan_notifier.scheduler.run",
                     new=AsyncMock(return_value=app_module.RunResult(0)),
                 ):
                     await scheduler._run_once("测试执行")
@@ -75,7 +75,7 @@ class SchedulerTests(RocoTestCase):
                 scheduler = SchedulerService(store)
                 report = DeliveryReport(True, "all", [PushResult("p1", "通道", "serverchan", True, "ok")])
                 run_result = app_module.RunResult(exit_code=0, report=report)
-                with patch("roco_push_console.scheduler.run", new=AsyncMock(return_value=run_result)):
+                with patch("roco_serverchan_notifier.scheduler.run", new=AsyncMock(return_value=run_result)):
                     await scheduler._run_once("测试执行")
                 return scheduler.state.last_push_results
 
@@ -96,7 +96,7 @@ class SchedulerTests(RocoTestCase):
                     await release.wait()
                     return app_module.RunResult(0)
 
-                with patch("roco_push_console.scheduler.run", new=slow_run):
+                with patch("roco_serverchan_notifier.scheduler.run", new=slow_run):
                     first = await scheduler.run_now()
                     second = await scheduler.run_now()
                     await asyncio.sleep(0)

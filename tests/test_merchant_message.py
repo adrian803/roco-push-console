@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from roco_push_console import app as app_module
-from roco_push_console.merchant_message import (
+from roco_serverchan_notifier import app as app_module
+from roco_serverchan_notifier.merchant_message import (
     build_merchant_markdown,
     build_notification_message,
     product_summary,

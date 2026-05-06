@@ -72,7 +72,7 @@ function Start-PersistentConsoleIfNeeded {
 Start-PersistentConsoleIfNeeded
 
 $RepoRoot = (Resolve-Path (Join-Path $ScriptDir "..")).Path
-$WorkerDir = Join-Path $RepoRoot "cf-workers"
+$WorkerDir = Join-Path $RepoRoot "cloudflare-worker"
 $WranglerToml = Join-Path $WorkerDir "wrangler.toml"
 $WorkerJsPath = Join-Path $WorkerDir "_worker.js"
 $WorkerJsTempConfig = Join-Path $WorkerDir ".wrangler-worker-js.tmp.toml"
@@ -222,7 +222,7 @@ function Get-DeployUrl {
 }
 
 if (-not (Test-Path $WorkerDir)) {
-    throw "找不到 cf-workers 目录：$WorkerDir"
+    throw "找不到 cloudflare-worker 目录：$WorkerDir"
 }
 if (-not (Test-Path $WranglerToml)) {
     throw "找不到 wrangler.toml：$WranglerToml"

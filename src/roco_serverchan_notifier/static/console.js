@@ -20,6 +20,55 @@ const baseFields = [
 let providerTypes = {};
 let providers = [];
 let configDirty = false;
+const themeStorageKey = "roco-console-theme";
+
+function storedTheme() {
+  try {
+    return localStorage.getItem(themeStorageKey);
+  } catch {
+    return "";
+  }
+}
+
+function systemPrefersDark() {
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function resolvedTheme() {
+  const theme = document.documentElement.dataset.theme || storedTheme();
+  if (theme === "light" || theme === "dark") return theme;
+  return systemPrefersDark() ? "dark" : "light";
+}
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try {
+    localStorage.setItem(themeStorageKey, theme);
+  } catch {
+    // Theme persistence is a convenience; the UI still works without storage.
+  }
+  renderThemeButton();
+}
+
+function renderThemeButton() {
+  const button = $("themeBtn");
+  const theme = resolvedTheme();
+  button.textContent = theme === "dark" ? "浅色" : "深色";
+  button.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+  button.setAttribute("aria-label", `切换到${theme === "dark" ? "浅色" : "深色"}模式`);
+}
+
+function initTheme() {
+  renderThemeButton();
+  $("themeBtn").addEventListener("click", () => {
+    applyTheme(resolvedTheme() === "dark" ? "light" : "dark");
+  });
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (!storedTheme()) renderThemeButton();
+    });
+  }
+}
 
 function setBusy(isBusy) {
   ["saveBtn", "runBtn", "testBtn", "refreshBtn", "addProviderBtn"].forEach(id => $(id).disabled = isBusy);
@@ -280,5 +329,6 @@ $("logoutBtn").addEventListener("click", async () => {
 });
 
 $("refreshBtn").addEventListener("click", () => loadState({preserveDraft: configDirty}));
+initTheme();
 loadState().catch(error => $("message").textContent = error.message);
 setInterval(() => loadState({preserveDraft: configDirty}).catch(() => {}), 5000);

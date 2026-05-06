@@ -14,17 +14,17 @@ try:
 except ImportError:
     from helpers import JsonRequest, RocoTestCase
 
-from roco_push_console import web as web_module
-from roco_push_console import web_auth, web_services
-from roco_push_console.config import ConfigStore
-from roco_push_console.push import ProviderConfig
+from roco_serverchan_notifier import web as web_module
+from roco_serverchan_notifier import web_auth, web_services
+from roco_serverchan_notifier.config import ConfigStore
+from roco_serverchan_notifier.push import ProviderConfig
 
 
 
 class WebAuthTests(RocoTestCase):
     def test_web_auth_delegates_to_password_and_session_modules(self):
-        password_module = importlib.import_module("roco_push_console.console_password")
-        session_module = importlib.import_module("roco_push_console.console_session")
+        password_module = importlib.import_module("roco_serverchan_notifier.console_password")
+        session_module = importlib.import_module("roco_serverchan_notifier.console_session")
 
         self.assertIs(web_auth.auth_password, password_module.auth_password)
         self.assertIs(web_auth.check_auth_password, password_module.check_auth_password)
