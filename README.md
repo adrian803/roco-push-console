@@ -108,6 +108,23 @@ docker run -d \
 
 如果想用 Workers Builds、Wrangler 项目部署或仓库自带的一键脚本（[Windows PowerShell](scripts/deploy-cf-worker.ps1) / [Windows 双击](scripts/deploy-cf-worker.cmd) / [Linux / macOS](scripts/deploy-cf-worker.sh)），请看 [Cloudflare Workers 完整部署指南](docs/deployment/cloudflare-workers.md)。
 
+### GitHub Actions（Fork 仓库）
+
+适合已有 GitHub 仓库、能接受偶发延迟的场景。不需要服务器，也不需要本地环境。
+
+1. Fork 本仓库（或在已有仓库中复制 `.github/workflows/scheduled-push.yml`）
+2. 进入仓库 → **Settings** → **Secrets and variables** → **Actions**，添加：
+
+| 名称 | 说明 |
+|------|------|
+| `ROCOM_API_KEY` | 数据源接口 Key（必需） |
+| `SERVERCHAN_SENDKEY` | Server 酱 SendKey；也可以换成其他任一推送通道 |
+
+3. 确认默认分支启用了 `scheduled-push.yml` 工作流
+4. 在 Actions 页面手动触发一次，验证推送是否成功
+
+定时已预设为北京时间 `08:05,12:05,16:05,20:05`，仓库长期不活跃可能被 GitHub 暂停。更稳定的免费方案推荐 [Cloudflare Workers](#cloudflare-workers控制台粘贴)。完整说明见 [GitHub Actions 定时推送说明](docs/deployment/github-actions.md)。
+
 ## 首次配置
 
 ### Docker Web 控制台
