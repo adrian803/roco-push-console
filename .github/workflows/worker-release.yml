@@ -30,4 +30,4 @@ jobs:
       - name: Upload _worker.js to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "${{ github.event.release.tag_name }}" cloudflare-worker/_worker.js --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" releases/cloudflare-worker/_worker.js --clobber

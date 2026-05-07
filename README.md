@@ -2,7 +2,7 @@
 
 [![Docker Image](https://img.shields.io/badge/docker-linxi5013%2Froco--serverchan--notifier-2496ed?logo=docker&logoColor=white)](https://hub.docker.com/r/linxi5013/roco-serverchan-notifier)
 [![CI](https://github.com/adrian803/roco-serverchan-notifier/actions/workflows/ci.yml/badge.svg)](https://github.com/adrian803/roco-serverchan-notifier/actions/workflows/ci.yml)
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-_worker.js-F6821F?logo=cloudflare&logoColor=white)](cloudflare-worker/_worker.js)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare%20Workers-_worker.js-F6821F?logo=cloudflare&logoColor=white)](releases/cloudflare-worker/_worker.js)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -97,7 +97,7 @@ docker run -d \
 适合想免费长期托管，又不想准备本地 Node.js 环境的场景。
 
 1. 打开 Cloudflare Dashboard → Workers & Pages → Create Worker
-2. 删除默认代码，把 [cloudflare-worker/_worker.js](cloudflare-worker/_worker.js) 的完整内容粘贴进去并保存部署
+2. 删除默认代码，把 [releases/cloudflare-worker/_worker.js](releases/cloudflare-worker/_worker.js) 的完整内容粘贴进去并保存部署
 3. 在 Settings → Variables and Secrets 中至少添加：
 
 | 名称 | 说明 |

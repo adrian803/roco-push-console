@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { afterEach, test } from "node:test";
 
 import worker from "../src/index";
@@ -265,6 +266,16 @@ test("_worker.js exports a pasteable worker module", async () => {
 
   assert.equal(typeof pasteWorker.fetch, "function");
   assert.equal(typeof pasteWorker.scheduled, "function");
+});
+
+test("releases _worker.js stays in sync with cloudflare-worker/_worker.js", () => {
+  const workerBundle = readFileSync(new URL("../_worker.js", import.meta.url), "utf8");
+  const releaseBundle = readFileSync(
+    new URL("../../releases/cloudflare-worker/_worker.js", import.meta.url),
+    "utf8"
+  );
+
+  assert.equal(releaseBundle, workerBundle);
 });
 
 test("root path and /health both return health status", async () => {

@@ -34,6 +34,7 @@ class GitHubActionsWorkflowTests(unittest.TestCase):
         self.assertIn("actions/checkout@v5", content)
         self.assertIn("actions/setup-node@v6", content)
         self.assertIn("./.github/actions/test-cf-worker", content)
+        self.assertIn("releases/cloudflare-worker/_worker.js", content)
 
     def test_docker_publish_workflow_uses_node24_capable_actions(self):
         content = self._read("docker-publish.yml")

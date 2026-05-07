@@ -24,7 +24,7 @@
 本项目有两套运行时，共用同一份业务语义：
 
 - Python Docker 版：包含 Web 控制台、配置持久化、定时调度和推送执行。
-- Cloudflare Workers 版：使用 TypeScript 实现无服务器定时触发和推送执行，并生成可粘贴的 `_worker.js`。
+- Cloudflare Workers 版：使用 TypeScript 实现无服务器定时触发和推送执行，并生成可粘贴的 `_worker.js`，同时同步一份到 `releases/cloudflare-worker/_worker.js`。
 
 两端必须保持以下行为一致：
 
@@ -184,13 +184,13 @@ Python 版有四层边界：
 
 ## Worker 运行时
 
-Worker 版的源码在 `cloudflare-worker/src/`，`cloudflare-worker/_worker.js` 是生成产物。
+Worker 版的源码在 `cloudflare-worker/src/`，`cloudflare-worker/_worker.js` 是生成产物，并会同步到 `releases/cloudflare-worker/_worker.js`。
 
 开发约束：
 
-- 不直接编辑 `_worker.js`。
+- 不直接编辑 `_worker.js`，也不直接编辑 `releases/cloudflare-worker/_worker.js`。
 - 改 Worker 源码后必须运行 `npm run build:worker`。
-- 提交前运行 `npm run check:worker`，它会重新构建并检查 `_worker.js` 是否同步。
+- 提交前运行 `npm run check:worker`，它会重新构建并检查两份 `_worker.js` 是否同步。
 - `Env` 类型只手写非 provider 核心绑定。provider env binding 由 manifest 派生，不要把 `SERVERCHAN_SENDKEY` 这类清单加回 `types.ts`。
 
 Worker 本地调试：

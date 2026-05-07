@@ -73,7 +73,7 @@ GitHub Actions 版适合已经在用 GitHub 仓库、又不想单独维护服务
 
 - `ci.yml`：PR 和 push 时运行测试 + 编译检查
 - `docker-publish.yml`：自动构建并发布多架构镜像（`amd64` / `arm64`）到 Docker Hub
-- `worker-release.yml`：发布 GitHub Release 时上传 `cloudflare-worker/_worker.js` 附件
+- `worker-release.yml`：发布 GitHub Release 时上传 `releases/cloudflare-worker/_worker.js` 附件
 
 ## 限制与建议
 
@@ -84,7 +84,7 @@ GitHub Actions 版适合已经在用 GitHub 仓库、又不想单独维护服务
 
 ## 迁移到 Cloudflare Workers
 
-1. 在 Cloudflare 控制台创建 Worker，并粘贴 [cloudflare-worker/_worker.js](../../cloudflare-worker/_worker.js)
+1. 在 Cloudflare 控制台创建 Worker，并粘贴 [releases/cloudflare-worker/_worker.js](../../releases/cloudflare-worker/_worker.js)
 2. 将 GitHub Actions Secrets 中的值迁移到 Worker 的 Variables and Secrets
 3. 在 Triggers → Cron Triggers 中添加 `5 0,4,8,12 * * *`
 4. 访问根路径 `/` 验证服务状态，再手动访问 `/trigger` 验证推送

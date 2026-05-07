@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build:worker": "wrangler deploy --dry-run --outdir dist && node scripts/write-worker-bundle.mjs",
-    "check:worker": "npm run build:worker && git diff --exit-code _worker.js",
+    "check:worker": "npm run build:worker && git diff --exit-code _worker.js ../releases/cloudflare-worker/_worker.js",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "dry-run": "wrangler deploy --dry-run --outdir dist",
